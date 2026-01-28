@@ -180,6 +180,36 @@
       .mbtn{ min-width: 56px; height: 52px; font-size: 16px; }
       .mbtn.wide{ min-width: 104px; }
     }
+    /* ===== Fix mobile alignment ===== */
+@media (max-width: 600px) {
+  body {
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .wrap {
+    grid-template-columns: 1fr !important;
+    justify-items: center;
+    width: 100%;
+    padding: 12px;
+  }
+
+  .board {
+    margin: 0 auto;
+  }
+
+  .side {
+    width: 100%;
+    max-width: 420px;
+    margin: 12px auto 0;
+  }
+
+  .mctl {
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 10px;
+  }
+}
   </style>
 </head>
 
