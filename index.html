@@ -126,6 +126,7 @@
       align-items:center;
       justify-content:center;
       pointer-events:none;
+      z-index: 5;
       font-size:28px;
       font-weight:900;
       letter-spacing:1px;
@@ -210,6 +211,104 @@
     bottom: 10px;
   }
 }
+/* ===== Mercy Modal ===== */
+.modal{
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(2,6,23,.55);
+  z-index: 10000;
+  padding: 18px;
+}
+.modal.show{ display: flex; }
+
+.modal-card{
+  width: min(520px, 92vw);
+  background: rgba(16,24,39,.92);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: 0 18px 50px rgba(0,0,0,.45);
+  backdrop-filter: blur(10px);
+}
+
+.modal-title{
+  font-weight: 900;
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+.modal-desc{
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+  margin-bottom: 10px;
+}
+
+.modal-input{
+  width: 100%;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.08);
+  color: var(--text);
+  padding: 0 12px;
+  outline: none;
+}
+.modal-input:focus{
+  border-color: rgba(255,255,255,.22);
+  background: rgba(255,255,255,.10);
+}
+
+.modal-tip{
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.modal-tip.bad{ color: #fca5a5; }
+.modal-tip.good{ color: #86efac; }
+
+.modal-actions{
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+.modal-btn{
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 800;
+}
+.modal-btn.ghost{
+  background: rgba(255,255,255,.06);
+}
+/* ===== Game Over Toast ===== */
+.toast{
+  position: fixed;
+  left: 50%;
+  top: 18%;
+  transform: translateX(-50%);
+  font-weight: 900;
+  font-size: 34px;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,.95);
+  text-shadow: 0 12px 35px rgba(0,0,0,.6);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 15000; /* 比弹窗低也行，但要比游戏高 */
+}
+
+.toast.show{
+  animation: toastFlash 1.2s ease-out forwards;
+}
+
+@keyframes toastFlash{
+  0%   { opacity: 0; transform: translateX(-50%) scale(.98); filter: blur(1px); }
+  15%  { opacity: 1; transform: translateX(-50%) scale(1.03); filter: blur(0px); }
+  55%  { opacity: .9; }
+  100% { opacity: 0; transform: translateX(-50%) scale(1.00); filter: blur(2px); }
+}
   </style>
 </head>
 
@@ -229,6 +328,7 @@
         <div class="btns">
           <button id="btnPause">Pause (P)</button>
           <button id="btnReset">Reset (R)</button>
+          <button id="btnMercy">求饶模式 🥺</button>
         </div>
         <p class="hint" style="margin-top:10px">
           键盘：← → 移动，↑ 旋转，↓ 软降，Space 硬降<br/>
@@ -256,7 +356,39 @@
     <button class="mbtn wide" data-act="drop">DROP</button>
     <button class="mbtn" data-act="pause">⏸</button>
   </div>
-
+  <!-- Mercy modal -->
+<div id="mercyModal" class="modal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="mercyTitle">
+      <div class="modal-title" id="mercyTitle">求饶模式 🥺</div>
+  
+      <div class="modal-desc">
+        请输入暗号开启慢速模式（提示：我是菜鸡）
+      </div>
+  
+      <input
+        id="mercyInput"
+        class="modal-input"
+        type="text"
+        inputmode="text"
+        autocomplete="on"
+        placeholder="例如：我是菜鸡"
+        list="mercyHints"
+      />
+      <datalist id="mercyHints">
+        <option value="我是菜鸡"></option>
+        <option value="我是新手"></option>
+        <option value="别打我"></option>
+      </datalist>
+  
+      <div id="mercyTip" class="modal-tip">输入正确暗号后会立刻减速。</div>
+  
+      <div class="modal-actions">
+        <button id="mercyCancel" class="modal-btn ghost">取消</button>
+        <button id="mercyOk" class="modal-btn">确认</button>
+      </div>
+    </div>
+  </div>
+  <div id="toast" class="toast"></div>
 <script>
 (() => {
   const W = 10, H = 20;
@@ -320,7 +452,18 @@
   let piece, nextKind;
   let score=0, lines=0, level=1;
   let paused=false, gameOver=false;
-
+  let mercyOn = false;
+let mercyMultiplier = 1; // 1=正常，>1 越大越慢
+  // ===== Toast helper =====
+  const toastEl = document.getElementById('toast');
+  function showToast(msg){
+    if(!toastEl) return;
+    toastEl.textContent = msg;
+    toastEl.classList.remove('show');
+    // 强制重启动画
+    void toastEl.offsetWidth;
+    toastEl.classList.add('show');
+  }
   const lineScore = {1:100,2:300,3:500,4:800};
 
   function spawn(){
@@ -334,6 +477,7 @@
       gameOver = true;
       overlayEl.textContent = "GAME OVER (R)";
       overlayEl.classList.add('show');
+      showToast("菜就多练");
     }
   }
 
@@ -444,7 +588,8 @@
 
     if(!paused && !gameOver){
       acc += dt;
-      const interval = Math.max(0.08, 0.55 - (level-1)*0.045);
+      const baseInterval = Math.max(0.08, 0.55 - (level-1)*0.045);
+const interval = baseInterval * mercyMultiplier;
       if(acc >= interval){
         acc = 0;
         if(canPlace(piece,0,1,0)) piece.y += 1;
@@ -540,7 +685,59 @@
       btn.addEventListener('click', (e) => e.preventDefault());
     });
   }
+  // ===== Mercy Mode (放在 IIFE 里面) =====
+  const btnMercy = document.getElementById('btnMercy');
+  const mercyModal = document.getElementById('mercyModal');
+  const mercyInput = document.getElementById('mercyInput');
+  const mercyTip = document.getElementById('mercyTip');
+  const mercyOk = document.getElementById('mercyOk');
+  const mercyCancel = document.getElementById('mercyCancel');
 
+  function openMercy(){
+    mercyModal.classList.add('show');
+    mercyModal.setAttribute('aria-hidden','false');
+    mercyInput.value = '';
+    mercyTip.textContent = '输入正确暗号后会立刻减速。';
+    mercyTip.className = 'modal-tip';
+    setTimeout(()=> mercyInput.focus(), 50);
+  }
+  function closeMercy(){
+    mercyModal.classList.remove('show');
+    mercyModal.setAttribute('aria-hidden','true');
+  }
+
+  function setMercy(on){
+    mercyOn = on;
+    mercyMultiplier = on ? 3.5 : 1;
+    btnMercy.textContent = on ? '求饶中 ✅（点取消）' : '求饶模式 🥺';
+  }
+
+  function tryEnableMercy(){
+    const txt = (mercyInput.value || '').trim();
+    if(txt === '我是菜鸡'){
+      setMercy(true);
+      mercyTip.textContent = '已开启！速度已变慢 ✅';
+      mercyTip.className = 'modal-tip good';
+      setTimeout(closeMercy, 450);
+    }else{
+      mercyTip.textContent = '不对哦…提示：我是菜鸡';
+      mercyTip.className = 'modal-tip bad';
+    }
+  }
+
+  btnMercy.addEventListener('click', () => {
+    if(mercyOn) setMercy(false);
+    else openMercy();
+  });
+
+  mercyCancel.addEventListener('click', closeMercy);
+  mercyOk.addEventListener('click', tryEnableMercy);
+  mercyInput.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter') tryEnableMercy();
+  });
+  mercyModal.addEventListener('click', (e) => {
+    if(e.target === mercyModal) closeMercy();
+  });
   reset();
   requestAnimationFrame(tick);
 })();
