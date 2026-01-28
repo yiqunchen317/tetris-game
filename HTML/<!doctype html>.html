@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tetris - HTML/CSS/JS</title>
+  <style>
+    :root{
+      --cell: 28px;
+      --gap: 2px;
+      --bg: #0b0f17;
+      --panel: #101827;
+      --grid: #0f172a;
+      --line: rgba(255,255,255,.06);
+      --text: #e5e7eb;
+      --muted:#94a3b8;
+      --shadow: rgba(0,0,0,.4);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: radial-gradient(1200px 600px at 50% 0%, #152045 0%, var(--bg) 55%);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", Arial;
+    }
+    .wrap{
+      display:grid;
+      grid-template-columns: auto 260px;
+      gap:16px;
+      padding:18px;
+      background: rgba(16,24,39,.55);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:16px;
+      box-shadow: 0 18px 40px var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+    .board{
+      position:relative;
+      width: calc(var(--cell) * 10 + var(--gap) * 9);
+      height: calc(var(--cell) * 20 + var(--gap) * 19);
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:12px;
+      overflow:hidden;
+    }
+    .grid{
+      position:absolute; inset:0;
+      display:grid;
+      grid-template-columns: repeat(10, var(--cell));
+      grid-template-rows: repeat(20, var(--cell));
+      gap: var(--gap);
+      padding: 0;
+    }
+    .cell{
+      width:var(--cell); height:var(--cell);
+      background: rgba(15, 23, 42, .55);
+      border:1px solid var(--line);
+      border-radius:6px;
+    }
+    .cell.filled{
+      border:none;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.14);
+      background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.06));
+    }
+    .cell.ghost{
+      background: transparent;
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.14);
+      border:none;
+      opacity:.55;
+    }
+
+    .side{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      padding:10px 12px;
+    }
+    .card{
+      background: rgba(16,24,39,.55);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:14px;
+      padding:12px;
+    }
+    .title{
+      font-weight:800;
+      letter-spacing:.5px;
+      margin:0 0 6px 0;
+    }
+    .row{
+      display:flex;
+      justify-content:space-between;
+      margin:6px 0;
+      color:var(--muted);
+      font-size:14px;
+    }
+    .row b{color:var(--text); font-weight:700}
+    .hint{
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.45;
+    }
+    .btns{
+      display:grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap:10px;
+      margin-top:10px;
+    }
+    button{
+      border:none;
+      border-radius:12px;
+      padding:10px 12px;
+      font-weight:700;
+      cursor:pointer;
+      background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.06));
+      color:var(--text);
+      border:1px solid rgba(255,255,255,.10);
+    }
+    button:active{transform: translateY(1px)}
+    .overlay{
+      position:absolute; inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      pointer-events:none;
+      font-size:28px;
+      font-weight:900;
+      letter-spacing:1px;
+      text-shadow: 0 10px 30px rgba(0,0,0,.6);
+      background: rgba(2,6,23,.35);
+      opacity:0;
+      transition: .15s;
+    }
+    .overlay.show{opacity:1}
+    @media (max-width: 860px){
+      .wrap{grid-template-columns: 1fr; width:min(520px, 92vw)}
+      .side{flex-direction:row; flex-wrap:wrap}
+      .side .card{flex:1 1 220px}
+      :root{--cell: 24px}
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="board">
+      <div id="grid" class="grid" aria-label="tetris grid"></div>
+      <div id="overlay" class="overlay">PAUSED</div>
+    </div>
+
+    <div class="side">
+      <div class="card">
+        <p class="title">TETRIS</p>
+        <div class="row"><span>Score</span><b id="score">0</b></div>
+        <div class="row"><span>Level</span><b id="level">1</b></div>
+        <div class="row"><span>Lines</span><b id="lines">0</b></div>
+        <div class="btns">
+          <button id="btnPause">Pause (P)</button>
+          <button id="btnReset">Reset (R)</button>
+        </div>
+        <p class="hint" style="margin-top:10px">
+          键盘：← → 移动，↑ 旋转，↓ 软降，Space 硬降<br/>
+          P 暂停，R 重开
+        </p>
+      </div>
+
+      <div class="card">
+        <p class="title">Tips</p>
+        <p class="hint" style="margin:0">
+          这是“HTML + CSS 画面 + JS 逻辑”的版本。<br/>
+          想更高级我可以加：Hold、预览3个、音效、触控按钮、皮肤换色。
+        </p>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const W = 10, H = 20;
+
+  // 0 empty, 1 filled
+  let board = Array.from({length:H}, () => Array(W).fill(0));
+
+  const gridEl = document.getElementById('grid');
+  const overlayEl = document.getElementById('overlay');
+  const scoreEl = document.getElementById('score');
+  const levelEl = document.getElementById('level');
+  const linesEl = document.getElementById('lines');
+  document.getElementById('btnPause').onclick = () => togglePause();
+  document.getElementById('btnReset').onclick = () => reset();
+
+  // build cells once
+  const cells = [];
+  for(let i=0;i<W*H;i++){
+    const d = document.createElement('div');
+    d.className = 'cell';
+    gridEl.appendChild(d);
+    cells.push(d);
+  }
+
+  const SHAPES = {
+    I: [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],
+    O: [[0,1,1,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]],
+    T: [[0,1,0,0],[1,1,1,0],[0,0,0,0],[0,0,0,0]],
+    S: [[0,1,1,0],[1,1,0,0],[0,0,0,0],[0,0,0,0]],
+    Z: [[1,1,0,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]],
+    J: [[1,0,0,0],[1,1,1,0],[0,0,0,0],[0,0,0,0]],
+    L: [[0,0,1,0],[1,1,1,0],[0,0,0,0],[0,0,0,0]],
+  };
+  const ORDER = ["I","O","T","S","Z","J","L"];
+
+  const rotCW = m => m[0].map((_,i) => m.map(r=>r[i]).reverse());
+  const cellsOf = m => {
+    const out = [];
+    for(let y=0;y<4;y++) for(let x=0;x<4;x++) if(m[y][x]) out.push([y,x]);
+    return out;
+  };
+  const rotations = {};
+  for(const k of ORDER){
+    let m = SHAPES[k];
+    const rots = [];
+    const seen = new Set();
+    for(let i=0;i<4;i++){
+      const c = JSON.stringify(cellsOf(m));
+      if(!seen.has(c)){ seen.add(c); rots.push(cellsOf(m)); }
+      m = rotCW(m);
+    }
+    rotations[k] = rots;
+  }
+
+  // 7-bag random
+  let bag = [];
+  const refillBag = () => {
+    bag = ORDER.slice().sort(() => Math.random() - 0.5);
+  };
+
+  let piece, nextKind;
+  let score=0, lines=0, level=1;
+  let paused=false, gameOver=false;
+
+  const lineScore = {1:100,2:300,3:500,4:800};
+
+  function spawn(){
+    if(bag.length === 0) refillBag();
+    const kind = nextKind ?? bag.pop();
+    if(bag.length === 0) refillBag();
+    nextKind = bag.pop();
+
+    piece = { kind, r:0, x:3, y:0 };
+    if(!canPlace(piece, 0, 0, 0)) {
+      gameOver = true;
+      overlayEl.textContent = "GAME OVER (R)";
+      overlayEl.classList.add('show');
+    }
+  }
+
+  function canPlace(p, dx, dy, dr){
+    const rots = rotations[p.kind];
+    const nr = (p.r + dr + rots.length) % rots.length;
+    for(const [cy,cx] of rots[nr]){
+      const x = p.x + dx + cx;
+      const y = p.y + dy + cy;
+      if(x<0 || x>=W || y<0 || y>=H) return false;
+      if(board[y][x]) return false;
+    }
+    return true;
+  }
+
+  function lock(){
+    for(const [cy,cx] of rotations[piece.kind][piece.r]){
+      board[piece.y+cy][piece.x+cx] = 1;
+    }
+    clearLines();
+    spawn();
+  }
+
+  function clearLines(){
+    let cleared = 0;
+    board = board.filter(row => row.some(v => v===0) ? true : (cleared++, false));
+    while(board.length < H) board.unshift(Array(W).fill(0));
+    if(cleared){
+      lines += cleared;
+      score += (lineScore[cleared] || 0) * level;
+      level = 1 + Math.floor(lines/10);
+      updateHUD();
+    }
+  }
+
+  function ghostY(){
+    let y = piece.y;
+    while(canPlace(piece, 0, (y-piece.y)+1, 0)) y++;
+    return y;
+  }
+
+  function hardDrop(){
+    const gy = ghostY();
+    score += Math.max(0, gy - piece.y) * 2;
+    piece.y = gy;
+    updateHUD();
+    lock();
+  }
+
+  function updateHUD(){
+    scoreEl.textContent = score;
+    levelEl.textContent = level;
+    linesEl.textContent = lines;
+  }
+
+  function draw(){
+    // reset all
+    for(const c of cells){ c.className = 'cell'; }
+
+    // settled
+    for(let y=0;y<H;y++){
+      for(let x=0;x<W;x++){
+        if(board[y][x]) cells[y*W+x].classList.add('filled');
+      }
+    }
+
+    if(!gameOver){
+      // ghost
+      const gy = ghostY();
+      for(const [cy,cx] of rotations[piece.kind][piece.r]){
+        const y = gy+cy, x = piece.x+cx;
+        const idx = y*W+x;
+        if(!board[y][x]) cells[idx].classList.add('ghost');
+      }
+      // active
+      for(const [cy,cx] of rotations[piece.kind][piece.r]){
+        const y = piece.y+cy, x = piece.x+cx;
+        cells[y*W+x].classList.add('filled');
+      }
+    }
+  }
+
+  function togglePause(){
+    if(gameOver) return;
+    paused = !paused;
+    overlayEl.textContent = paused ? "PAUSED" : "";
+    overlayEl.classList.toggle('show', paused);
+  }
+
+  function reset(){
+    board = Array.from({length:H}, () => Array(W).fill(0));
+    score=0; lines=0; level=1;
+    paused=false; gameOver=false;
+    overlayEl.classList.remove('show');
+    overlayEl.textContent = "PAUSED";
+    bag = [];
+    nextKind = null;
+    updateHUD();
+    spawn();
+  }
+
+  // main loop
+  let last = performance.now();
+  let acc = 0;
+  function tick(t){
+    const dt = (t-last)/1000;
+    last = t;
+
+    if(!paused && !gameOver){
+      acc += dt;
+      const interval = Math.max(0.08, 0.55 - (level-1)*0.045);
+      if(acc >= interval){
+        acc = 0;
+        if(canPlace(piece,0,1,0)) piece.y += 1;
+        else lock();
+      }
+      draw();
+    }
+    requestAnimationFrame(tick);
+  }
+
+  // controls
+  window.addEventListener('keydown', (e) => {
+    if(e.code === 'KeyP'){ togglePause(); return; }
+    if(e.code === 'KeyR'){ reset(); return; }
+    if(e.code === 'KeyQ'){ /* 网页不能像终端那样退出 */ return; }
+    if(paused || gameOver) return;
+
+    if(e.code === 'ArrowLeft'){
+      if(canPlace(piece,-1,0,0)) piece.x -= 1;
+    } else if(e.code === 'ArrowRight'){
+      if(canPlace(piece, 1,0,0)) piece.x += 1;
+    } else if(e.code === 'ArrowDown'){
+      if(canPlace(piece,0,1,0)) { piece.y += 1; score += 1; updateHUD(); }
+      else lock();
+    } else if(e.code === 'ArrowUp'){
+      if(canPlace(piece,0,0,1)) piece.r = (piece.r+1) % rotations[piece.kind].length;
+    } else if(e.code === 'Space'){
+      e.preventDefault();
+      hardDrop();
+    }
+    draw();
+  });
+
+  reset();
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
