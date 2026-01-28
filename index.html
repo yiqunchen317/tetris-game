@@ -5,14 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>Tetris - HTML/CSS/JS</title>
   <style>
-    html{
-  background: #0b0f17;
+    html, body{
   overscroll-behavior: none;
 }
-body{
-  overscroll-behavior: none;
-}
-
     :root{
       --cell: 28px;
       --gap: 2px;
@@ -27,14 +22,11 @@ body{
     *{box-sizing:border-box}
     body{
       margin:0;
-      min-height: 100vh; 
-      height: 100dvh;
-background-color: #0b0f17;
+      min-height:100vh;
       display:flex;
       align-items:center;
       justify-content:center;
       background: radial-gradient(1200px 600px at 50% 0%, #152045 0%, var(--bg) 55%);
-      padding-top: env(safe-area-inset-top);
       color:var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", Arial;
       padding-bottom: calc(var(--mctl-pad, 0px) + env(safe-area-inset-bottom));
@@ -62,7 +54,6 @@ background-color: #0b0f17;
       border:1px solid rgba(255,255,255,.08);
       border-radius:12px;
       overflow:hidden;
-      touch-action: none;
     }
     .grid{
       position:absolute; inset:0;
@@ -177,7 +168,7 @@ background-color: #0b0f17;
       user-select: none;
       -webkit-user-select: none;
       -webkit-touch-callout: none;
-      touch-action: none;
+      touch-action: manipulation;
     }
     .mbtn{
       min-width: 52px;
@@ -839,12 +830,6 @@ const startScreen = document.getElementById('startScreen');
 const btnStart = document.getElementById('btnStart');
 
 function startGame(){
-  // iOS/Safari 可能不支持真正的全屏；这里必须防止报错导致按钮失效
-  try{
-    const req = document.documentElement.requestFullscreen;
-    if(typeof req === 'function') req.call(document.documentElement);
-  }catch(_){ /* ignore */ }
-
   started = true;
   startScreen?.classList.remove('show');
   reset();
