@@ -7,10 +7,12 @@
   <style>
     html, body{
   overscroll-behavior: none;
-  touch-action: manipulation;
 }
 body{
-  overflow: hidden;
+    body{
+  overflow-x: hidden;
+  overflow-y: auto;          /* 允许上下滑 */
+  -webkit-overflow-scrolling: touch;
 }
     :root{
       --cell: 28px;
@@ -744,6 +746,13 @@ const interval = baseInterval * mercyMultiplier;
       btn.addEventListener('click', (e) => e.preventDefault());
     });
   }
+  // block double-tap zoom (iOS)
+let lastTouchEnd = 0;
+document.addEventListener('touchend', (e) => {
+  const now = Date.now();
+  if(now - lastTouchEnd <= 300) e.preventDefault();
+  lastTouchEnd = now;
+}, { passive: false });
   // ===== Mercy Mode (放在 IIFE 里面) =====
   const btnMercy = document.getElementById('btnMercy');
   const mercyModal = document.getElementById('mercyModal');
