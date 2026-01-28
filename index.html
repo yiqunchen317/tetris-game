@@ -22,7 +22,9 @@
     *{box-sizing:border-box}
     body{
       margin:0;
-      min-height:100vh;
+      min-height: 100vh; 
+      height: 100dvh;
+background-color: #0b0f17;
       display:flex;
       align-items:center;
       justify-content:center;
@@ -830,6 +832,7 @@ const startScreen = document.getElementById('startScreen');
 const btnStart = document.getElementById('btnStart');
 
 function startGame(){
+  document.documentElement.requestFullscreen?.();
   started = true;
   startScreen?.classList.remove('show');
   reset();
