@@ -8,11 +8,6 @@
     html, body{
   overscroll-behavior: none;
 }
-    body{
-  overflow-x: hidden;
-  overflow-y: auto;          /* 允许上下滑 */
-  -webkit-overflow-scrolling: touch;
-}
     :root{
       --cell: 28px;
       --gap: 2px;
@@ -35,6 +30,9 @@
       color:var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", Arial;
       padding-bottom: calc(var(--mctl-pad, 0px) + env(safe-area-inset-bottom));
+      overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
     }
     .wrap{
       display:grid;
@@ -46,7 +44,7 @@
       border-radius:16px;
       box-shadow: 0 18px 40px var(--shadow);
       backdrop-filter: blur(10px);
-      margin-bottom: calc(220px + env(safe-area-inset-bottom));
+      margin-bottom: calc(var(--mctl-pad, 0px) + env(safe-area-inset-bottom));
     }
     .board{
       position:relative;
@@ -464,7 +462,7 @@
   const levelEl = document.getElementById('level');
   const linesEl = document.getElementById('lines');
   document.getElementById('btnPause').onclick = () => togglePause();
-  document.getElementById('btnReset').onclick = () => reset();
+  document.getElementById('btnReset').onclick = () => { if(!started) startGame(); else reset(); };
 
   // build cells once
   const cells = [];
@@ -667,7 +665,7 @@ const interval = baseInterval * mercyMultiplier;
     if(code === 'KeyP'){ togglePause(); return; }
     if(code === 'KeyR'){ reset(); return; }
     if(code === 'KeyQ'){ return; }
-    if(paused || gameOver) return;
+    if(!started || paused || gameOver) return;
 
     if(code === 'ArrowLeft'){
       if(canPlace(piece,-1,0,0)) piece.x -= 1;
