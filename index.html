@@ -141,6 +141,45 @@
       .side .card{flex:1 1 220px}
       :root{--cell: 24px}
     }
+
+    /* ===== Mobile touch controls ===== */
+    .mctl{
+      position: fixed;
+      left: 50%;
+      bottom: 14px;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 16px;
+      background: rgba(2,6,23,.35);
+      border: 1px solid rgba(255,255,255,.10);
+      backdrop-filter: blur(10px);
+      z-index: 9999;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: manipulation;
+    }
+    .mbtn{
+      min-width: 52px;
+      height: 48px;
+      border-radius: 14px;
+      font-weight: 800;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.10);
+      color: var(--text);
+      box-shadow: 0 10px 25px rgba(0,0,0,.25);
+      padding: 0 14px;
+    }
+    .mbtn.wide{ min-width: 92px; }
+    .mbtn:active{ transform: scale(.96); }
+
+    @media (max-width: 520px){
+      .mctl{ gap: 8px; padding: 9px; }
+      .mbtn{ min-width: 56px; height: 52px; font-size: 16px; }
+      .mbtn.wide{ min-width: 104px; }
+    }
   </style>
 </head>
 
@@ -164,17 +203,28 @@
         <p class="hint" style="margin-top:10px">
           键盘：← → 移动，↑ 旋转，↓ 软降，Space 硬降<br/>
           P 暂停，R 重开
+          （手机一样的操作，相同按钮）
         </p>
       </div>
 
       <div class="card">
         <p class="title">Tips</p>
         <p class="hint" style="margin:0">
-          这是“HTML + CSS 画面 + JS 逻辑”的版本。<br/>
-          想更高级我可以加：Hold、预览3个、音效、触控按钮、皮肤换色。
+          你群哥耗费一周精心打造，有啥不会的来问我<br/>
+          啊哈哈哈哈哈哈。
         </p>
       </div>
     </div>
+  </div>
+
+  <!-- Mobile Controls (touch) -->
+  <div id="mobileControls" class="mctl" aria-label="mobile controls">
+    <button class="mbtn" data-act="left">⬅</button>
+    <button class="mbtn" data-act="right">➡</button>
+    <button class="mbtn" data-act="rotate">🔄</button>
+    <button class="mbtn" data-act="down">⬇</button>
+    <button class="mbtn wide" data-act="drop">DROP</button>
+    <button class="mbtn" data-act="pause">⏸</button>
   </div>
 
 <script>
@@ -375,28 +425,91 @@
     requestAnimationFrame(tick);
   }
 
-  // controls
-  window.addEventListener('keydown', (e) => {
-    if(e.code === 'KeyP'){ togglePause(); return; }
-    if(e.code === 'KeyR'){ reset(); return; }
-    if(e.code === 'KeyQ'){ /* 网页不能像终端那样退出 */ return; }
+  // controls (keyboard + mobile)
+  function handleControl(code){
+    if(code === 'KeyP'){ togglePause(); return; }
+    if(code === 'KeyR'){ reset(); return; }
+    if(code === 'KeyQ'){ return; }
     if(paused || gameOver) return;
 
-    if(e.code === 'ArrowLeft'){
+    if(code === 'ArrowLeft'){
       if(canPlace(piece,-1,0,0)) piece.x -= 1;
-    } else if(e.code === 'ArrowRight'){
+    } else if(code === 'ArrowRight'){
       if(canPlace(piece, 1,0,0)) piece.x += 1;
-    } else if(e.code === 'ArrowDown'){
+    } else if(code === 'ArrowDown'){
       if(canPlace(piece,0,1,0)) { piece.y += 1; score += 1; updateHUD(); }
       else lock();
-    } else if(e.code === 'ArrowUp'){
+    } else if(code === 'ArrowUp'){
       if(canPlace(piece,0,0,1)) piece.r = (piece.r+1) % rotations[piece.kind].length;
-    } else if(e.code === 'Space'){
-      e.preventDefault();
+    } else if(code === 'Space'){
       hardDrop();
     }
     draw();
+  }
+
+  window.addEventListener('keydown', (e) => {
+    // 防止手机外接键盘/电脑浏览器按空格滚动
+    if(e.code === 'Space') e.preventDefault();
+    handleControl(e.code);
   });
+
+  // ===== Mobile buttons =====
+  const mctl = document.getElementById('mobileControls');
+  let repeatTimer = null;
+
+  function startRepeat(code, ms){
+    stopRepeat();
+    handleControl(code); // 先触发一次
+    repeatTimer = setInterval(() => handleControl(code), ms);
+  }
+  function stopRepeat(){
+    if(repeatTimer){ clearInterval(repeatTimer); repeatTimer = null; }
+  }
+
+  if(mctl){
+    const actToCode = (act) => {
+      if(act === 'left') return 'ArrowLeft';
+      if(act === 'right') return 'ArrowRight';
+      if(act === 'down') return 'ArrowDown';
+      if(act === 'rotate') return 'ArrowUp';
+      if(act === 'drop') return 'Space';
+      if(act === 'pause') return 'KeyP';
+      return null;
+    };
+
+    // 防止触控滑动页面
+    mctl.addEventListener('touchmove', (e) => e.preventDefault(), {passive:false});
+
+    mctl.querySelectorAll('button[data-act]').forEach(btn => {
+      const act = btn.dataset.act;
+      const code = actToCode(act);
+
+      const onDown = (e) => {
+        e.preventDefault();
+        if(!code) return;
+
+        // 左/右/下：长按连发
+        if(code === 'ArrowLeft' || code === 'ArrowRight') startRepeat(code, 90);
+        else if(code === 'ArrowDown') startRepeat(code, 60);
+        else handleControl(code); // 旋转/硬降/暂停：点一下即可
+      };
+
+      const onUp = (e) => {
+        e.preventDefault();
+        stopRepeat();
+      };
+
+      btn.addEventListener('touchstart', onDown, {passive:false});
+      btn.addEventListener('touchend', onUp, {passive:false});
+      btn.addEventListener('touchcancel', onUp, {passive:false});
+
+      // 电脑上也能点
+      btn.addEventListener('mousedown', onDown);
+      btn.addEventListener('mouseup', onUp);
+      btn.addEventListener('mouseleave', onUp);
+      btn.addEventListener('click', (e) => e.preventDefault());
+    });
+  }
 
   reset();
   requestAnimationFrame(tick);
