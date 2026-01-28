@@ -360,6 +360,19 @@
   font-size: 12px;
   color: var(--muted);
 }
+/* ===== Line clear animation ===== */
+/* ===== Line clear animation ===== */
+.cell.clearing{
+  animation: shatter .28s cubic-bezier(.2,.8,.2,1) forwards;
+  transform-origin: center;
+}
+
+@keyframes shatter{
+  0%   { transform: scale(1);    opacity: 1;   filter: brightness(1); }
+  20%  { transform: scale(1.22); opacity: 1;   filter: brightness(2.2); }
+  60%  { transform: scale(.9);   opacity: .45; filter: brightness(1.2) blur(1px); }
+  100% { transform: scale(.55);  opacity: 0;   filter: brightness(.8) blur(2px); }
+}
   </style>
 </head>
 
@@ -385,10 +398,14 @@
         <div class="row"><span>Score</span><b id="score">0</b></div>
         <div class="row"><span>Level</span><b id="level">1</b></div>
         <div class="row"><span>Lines</span><b id="lines">0</b></div>
+        <div class="row"><span>Stage</span><b id="stage">1</b></div>
         <div class="btns">
           <button id="btnPause">Pause (P)</button>
           <button id="btnReset">Reset (R)</button>
           <button id="btnMercy">求饶模式 🥺</button>
+          <button id="btnPro">大神模式 ⚡（慢慢变快）</button>
+          <button id="btnNoob">菜鸡模式 🐣（悬空自动落）</button>
+          <button id="btnEndless">无尽模式 ♾️（爽死你）</button>
         </div>
         <p class="hint" style="margin-top:10px">
           键盘：← → 移动，↑ 旋转，↓ 软降，Space 硬降<br/>
@@ -449,6 +466,27 @@
     </div>
   </div>
   <div id="toast" class="toast"></div>
+  <!-- Stage clear modal -->
+<div id="stageModal" class="modal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="stageTitle">
+      <div class="modal-title" id="stageTitle">通关 ✅</div>
+      <div id="stageDesc" class="modal-desc">你已通过本关！</div>
+      <div class="modal-actions">
+        <button id="stageNext" class="modal-btn">进入下一关 ▶</button>
+      </div>
+    </div>
+  </div>
+  <!-- Endless modal -->
+<div id="endlessModal" class="modal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="endlessTitle">
+      <div class="modal-title" id="endlessTitle">提示 😈</div>
+      <div id="endlessDesc" class="modal-desc">再玩就更菜了</div>
+      <div class="modal-actions">
+        <button id="endlessContinue" class="modal-btn ghost">继续玩</button>
+        <button id="endlessToPro" class="modal-btn">挑战大神模式 ⚡</button>
+      </div>
+    </div>
+  </div>
 <script>
 (() => {
   const W = 10, H = 20;
@@ -461,6 +499,19 @@
   const scoreEl = document.getElementById('score');
   const levelEl = document.getElementById('level');
   const linesEl = document.getElementById('lines');
+  const stageEl = document.getElementById('stage');
+  const btnPro = document.getElementById('btnPro');
+  const btnNoob = document.getElementById('btnNoob');
+  const btnEndless = document.getElementById('btnEndless');
+
+const endlessModal = document.getElementById('endlessModal');
+const endlessDesc = document.getElementById('endlessDesc');
+const endlessContinue = document.getElementById('endlessContinue');
+const endlessToPro = document.getElementById('endlessToPro');
+ 
+  const stageModal = document.getElementById('stageModal');
+  const stageDesc = document.getElementById('stageDesc');
+  const stageNext = document.getElementById('stageNext');
   document.getElementById('btnPause').onclick = () => togglePause();
   document.getElementById('btnReset').onclick = () => { if(!started) startGame(); else reset(); };
 
@@ -506,14 +557,25 @@
   // 7-bag random
   let bag = [];
   const refillBag = () => {
-    bag = ORDER.slice().sort(() => Math.random() - 0.5);
-  };
+  const pool = endlessMode ? ["I","O"] : ORDER;
+  bag = pool.slice().sort(() => Math.random() - 0.5);
+};
 
   let piece, nextKind;
   let score=0, lines=0, level=1;
   let paused=false, gameOver=false;
+  let stage = 1;
+let stageTarget = 500;
+let proMode = false;        // 大神模式：用你原来的 level 速度机制
+let stageCleared = false;   // 通关后等待进下一关
+let clearingAll = false;    // 通关时全场摧毁动画
+let noobMode = false; // 菜鸡模式：消行后悬空方块自动落下
+let endlessMode = false;   // 无尽模式：只出 O/I
+let endlessLocked = false; // 到 2000 分后只弹一次
   let mercyOn = false;
 let mercyMultiplier = 1; // 1=正常，>1 越大越慢
+let clearing = false;
+let clearingRows = new Set(); // 记录正在消除的行
   // ===== Toast helper =====
   const toastEl = document.getElementById('toast');
   function showToast(msg){
@@ -525,7 +587,71 @@ let mercyMultiplier = 1; // 1=正常，>1 越大越慢
     toastEl.classList.add('show');
   }
   const lineScore = {1:100,2:300,3:500,4:800};
+  function openStageModal(){
+  if(!stageModal) return;
+  stageModal.classList.add('show');
+  stageModal.setAttribute('aria-hidden','false');
+}
+function closeStageModal(){
+  if(!stageModal) return;
+  stageModal.classList.remove('show');
+  stageModal.setAttribute('aria-hidden','true');
+}
 
+function winStage(){
+  if(stageCleared || proMode) return;
+  stageCleared = true;
+  clearingAll = true;
+
+  draw(); // 让全场方块开始播放 clearing 动画
+
+  setTimeout(() => {
+    board = Array.from({length:H}, () => Array(W).fill(0));
+    clearingAll = false;
+
+    paused = true;
+    overlayEl.textContent = "STAGE CLEAR";
+    overlayEl.classList.add('show');
+
+    stageTarget = stageTargetFor(stage);
+    if(stageDesc) stageDesc.textContent = `第 ${stage} 关通关！目标 ${stageTarget} 分已达成。点击进入下一关。`;
+
+    openStageModal();
+    draw();
+  }, 280);
+}
+
+function checkStage(){
+  if(proMode) return;
+  if(stageCleared) return;
+  stageTarget = stageTargetFor(stage);
+  if(score >= stageTarget){
+    winStage();
+  }
+}
+function openEndlessModal(){
+  if(!endlessModal) return;
+  endlessModal.classList.add('show');
+  endlessModal.setAttribute('aria-hidden','false');
+}
+function closeEndlessModal(){
+  if(!endlessModal) return;
+  endlessModal.classList.remove('show');
+  endlessModal.setAttribute('aria-hidden','true');
+}
+
+function checkEndlessCap(){
+  if(!endlessMode) return;
+  if(endlessLocked) return;
+  if(score >= 200){
+    endlessLocked = true;
+    paused = true;
+    overlayEl.textContent = "2000+";
+    overlayEl.classList.add('show');
+    if(endlessDesc) endlessDesc.textContent = "再玩就更菜了";
+    openEndlessModal();
+  }
+}
   function spawn(){
     if(bag.length === 0) refillBag();
     const kind = nextKind ?? bag.pop();
@@ -554,25 +680,72 @@ let mercyMultiplier = 1; // 1=正常，>1 越大越慢
   }
 
   function lock(){
-    for(const [cy,cx] of rotations[piece.kind][piece.r]){
-      board[piece.y+cy][piece.x+cx] = 1;
-    }
-    clearLines();
-    spawn();
+  for(const [cy,cx] of rotations[piece.kind][piece.r]){
+    board[piece.y+cy][piece.x+cx] = 1;
   }
+  const didClear = clearLines();
+  if(!didClear) spawn(); // 没消除才立刻出下一块
+}
 
   function clearLines(){
-    let cleared = 0;
-    board = board.filter(row => row.some(v => v===0) ? true : (cleared++, false));
-    while(board.length < H) board.unshift(Array(W).fill(0));
-    if(cleared){
-      lines += cleared;
-      score += (lineScore[cleared] || 0) * level;
-      level = 1 + Math.floor(lines/10);
-      updateHUD();
+  // 找出满行
+  const full = [];
+  for(let y=0;y<H;y++){
+    let ok = true;
+    for(let x=0;x<W;x++){
+      if(!board[y][x]) { ok = false; break; }
     }
+    if(ok) full.push(y);
   }
 
+  if(full.length === 0) return false;
+
+  // 进入消除动画状态
+  clearing = true;
+  clearingRows = new Set(full);
+
+  // 播放动画一小段时间后，再真正删除行
+  setTimeout(() => {
+    // 删除满行
+    board = board.filter((_, y) => !clearingRows.has(y));
+    while(board.length < H) board.unshift(Array(W).fill(0));
+    if(noobMode){
+  applyNoobGravity();
+}
+
+    // 计分/升级
+    const cleared = full.length;
+    lines += cleared;
+    score += (lineScore[cleared] || 0) * level;
+    if(proMode) level = 1 + Math.floor(lines/2);
+    updateHUD();
+    checkStage();
+
+    // 退出消除状态
+    clearing = false;
+    clearingRows = new Set();
+
+    // 继续生成下一块（重要：这里再 spawn）
+    spawn();
+  }, 280); // 和 CSS 动画时间匹配（.28s）
+
+  return true;
+}
+function applyNoobGravity(){
+  // 每一列把方块“压实”到最底下（像沙子一样直落）
+  for(let x=0; x<W; x++){
+    let writeY = H - 1;
+    for(let y = H - 1; y >= 0; y--){
+      if(board[y][x]){
+        if(y !== writeY){
+          board[writeY][x] = 1;
+          board[y][x] = 0;
+        }
+        writeY--;
+      }
+    }
+  }
+}
   function ghostY(){
     let y = piece.y;
     while(canPlace(piece, 0, (y-piece.y)+1, 0)) y++;
@@ -584,25 +757,41 @@ let mercyMultiplier = 1; // 1=正常，>1 越大越慢
     score += Math.max(0, gy - piece.y) * 2;
     piece.y = gy;
     updateHUD();
-    lock();
+checkStage();
+checkEndlessCap();
+lock();
   }
 
-  function updateHUD(){
-    scoreEl.textContent = score;
-    levelEl.textContent = level;
-    linesEl.textContent = lines;
-  }
+  function stageTargetFor(s){
+  return 500 + (s-1)*300;
+}
+function stageIntervalFor(s){
+  // 每关固定一个速度（越往后越快），想更快/更慢就改这里
+  return Math.max(0.12, 0.60 - (s-1)*0.05);
+}
+
+function updateHUD(){
+  scoreEl.textContent = score;
+  levelEl.textContent = level;
+  linesEl.textContent = lines;
+  if(stageEl) stageEl.textContent = stage;
+}
 
   function draw(){
     // reset all
     for(const c of cells){ c.className = 'cell'; }
 
     // settled
-    for(let y=0;y<H;y++){
-      for(let x=0;x<W;x++){
-        if(board[y][x]) cells[y*W+x].classList.add('filled');
-      }
+    // settled
+for(let y=0;y<H;y++){
+  for(let x=0;x<W;x++){
+    if(board[y][x]){
+      const idx = y*W+x;
+      cells[idx].classList.add('filled');
+      if(clearingAll || clearingRows.has(y)) cells[idx].classList.add('clearing');
     }
+  }
+}
 
     if(!gameOver){
       // ghost
@@ -631,6 +820,9 @@ let mercyMultiplier = 1; // 1=正常，>1 越大越慢
     board = Array.from({length:H}, () => Array(W).fill(0));
     score=0; lines=0; level=1;
     paused=false; gameOver=false;
+    stageCleared = false;
+  clearingAll = false;
+  closeStageModal();
     overlayEl.classList.remove('show');
     overlayEl.textContent = "PAUSED";
     bag = [];
@@ -647,38 +839,69 @@ let mercyMultiplier = 1; // 1=正常，>1 越大越慢
     last = t;
 
     if(!paused && !gameOver){
-      acc += dt;
-      const baseInterval = Math.max(0.08, 0.55 - (level-1)*0.045);
+  if(!clearing){
+    acc += dt;
+    const baseInterval = proMode
+  ? Math.max(0.08, 0.4 - (level-1)*0.015)   // 你原来的机制
+  : stageIntervalFor(stage);                 // 关卡固定速度
+
 const interval = baseInterval * mercyMultiplier;
-      if(acc >= interval){
-        acc = 0;
-        if(canPlace(piece,0,1,0)) piece.y += 1;
-        else lock();
-      }
-      draw();
+    if(acc >= interval){
+      acc = 0;
+      if(canPlace(piece,0,1,0)) piece.y += 1;
+      else lock();
     }
+  }
+  draw(); // ✅ 不管 clearing 与否都画，这样动画一直播放
+}
     requestAnimationFrame(tick);
   }
 
   // controls (keyboard + mobile)
+  function tryRotate(dr){
+  if(!piece) return false;
+
+  // 简化版 wall-kick：原地转不了就尝试挪一下再转
+  const kicks = [
+    [0,0],
+    [-1,0],[1,0],
+    [-2,0],[2,0],
+    [0,-1],
+    [-1,-1],[1,-1]
+  ];
+
+  for(const [kx,ky] of kicks){
+    if(canPlace(piece, kx, ky, dr)){
+      const rots = rotations[piece.kind];
+      piece.r = (piece.r + dr + rots.length) % rots.length;
+      piece.x += kx;
+      piece.y += ky;
+      return true;
+    }
+  }
+  return false;
+}
   function handleControl(code){
     if(code === 'KeyP'){ togglePause(); return; }
     if(code === 'KeyR'){ reset(); return; }
     if(code === 'KeyQ'){ return; }
-    if(!started || paused || gameOver) return;
+    if(!started || paused || gameOver || stageCleared) return;
 
     if(code === 'ArrowLeft'){
       if(canPlace(piece,-1,0,0)) piece.x -= 1;
     } else if(code === 'ArrowRight'){
       if(canPlace(piece, 1,0,0)) piece.x += 1;
     } else if(code === 'ArrowDown'){
-      if(canPlace(piece,0,1,0)) { piece.y += 1; score += 1; updateHUD(); }
+        if(canPlace(piece,0,1,0)) { piece.y += 1; score += 1; updateHUD(); checkStage(); checkEndlessCap(); }
       else lock();
     } else if(code === 'ArrowUp'){
-      if(canPlace(piece,0,0,1)) piece.r = (piece.r+1) % rotations[piece.kind].length;
-    } else if(code === 'Space'){
-      hardDrop();
-    }
+  tryRotate(1);
+
+} else if(code === 'KeyZ'){
+  tryRotate(-1);
+} else if(code === 'Space'){
+  hardDrop();
+}
     draw();
   }
 
@@ -771,6 +994,74 @@ document.addEventListener('touchend', (e) => {
   if(now - lastTouchEnd <= 300) e.preventDefault();
   lastTouchEnd = now;
 }, { passive: false });
+btnPro?.addEventListener('click', () => {
+  proMode = !proMode;
+  if(btnPro) btnPro.textContent = proMode ? '大神模式 ✅（慢慢变快）' : '大神模式 ⚡（慢慢变快）';
+});
+btnNoob?.addEventListener('click', () => {
+  noobMode = !noobMode;
+  if(btnNoob) btnNoob.textContent = noobMode
+    ? '菜鸡模式 ✅（悬空自动落）'
+    : '菜鸡模式 🐣（悬空自动落）';
+});
+btnEndless?.addEventListener('click', () => {
+  endlessMode = !endlessMode;
+  endlessLocked = false;
+
+  if(btnEndless) btnEndless.textContent = endlessMode
+    ? '无尽模式 ✅（只出 O/I）'
+    : '无尽模式 ♾️（只出 O/I）';
+
+  // 开关无尽模式都重开一局更清爽
+  started = true;
+  startScreen?.classList.remove('show');
+  reset();
+});
+
+endlessContinue?.addEventListener('click', () => {
+  closeEndlessModal();
+  overlayEl.classList.remove('show');
+  paused = false;
+});
+
+endlessToPro?.addEventListener('click', () => {
+  closeEndlessModal();
+  overlayEl.classList.remove('show');
+
+  // 关闭无尽，开启大神
+  endlessMode = false;
+  endlessLocked = false;
+
+  proMode = true;
+  if(btnPro) btnPro.textContent = '大神模式 ✅（慢慢变快）';
+  if(btnEndless) btnEndless.textContent = '无尽模式 ♾️（只出 O/I）';
+
+  paused = false;
+  stageCleared = false;
+  clearingAll = false;
+  reset();
+});
+stageNext?.addEventListener('click', () => {
+  closeStageModal();
+  overlayEl.classList.remove('show');
+  paused = false;
+  stageCleared = false;
+
+  stage += 1;
+  stageTarget = stageTargetFor(stage);
+
+  // 每关重新开始（你要累计分数就删掉这3行）
+  score = 0;
+  lines = 0;
+  level = 1;
+  updateHUD();
+
+  board = Array.from({length:H}, () => Array(W).fill(0));
+  bag = [];
+  nextKind = null;
+  spawn();
+  draw();
+});
   // ===== Mercy Mode (放在 IIFE 里面) =====
   const btnMercy = document.getElementById('btnMercy');
   const mercyModal = document.getElementById('mercyModal');
