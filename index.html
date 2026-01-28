@@ -33,6 +33,7 @@
       overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: none;
     }
     .wrap{
       display:grid;
@@ -194,6 +195,13 @@
   body {
     justify-content: flex-start;
     align-items: flex-start;
+    padding-top: env(safe-area-inset-top);
+    .wrap{
+  margin-top: 0;
+  .wrap{
+  margin-top: 8px;
+}
+}
   }
 
   .wrap {
