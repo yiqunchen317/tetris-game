@@ -34,7 +34,7 @@
       background: radial-gradient(1200px 600px at 50% 0%, #152045 0%, var(--bg) 55%);
       color:var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", Arial;
-      padding-bottom: calc(220px + env(safe-area-inset-bottom)); 
+      padding-bottom: calc(var(--mctl-pad, 0px) + env(safe-area-inset-bottom));
     }
     .wrap{
       display:grid;
@@ -194,7 +194,7 @@
     /* ===== Fix mobile alignment ===== */
 @media (max-width: 600px) {
   body {
-    justify-content: center;
+    justify-content: flex-start;
     align-items: flex-start;
   }
 
@@ -693,7 +693,26 @@ const interval = baseInterval * mercyMultiplier;
   // ===== Mobile buttons =====
   const mctl = document.getElementById('mobileControls');
   let repeatTimer = null;
+// ===== Auto reserve space for mobile controls (no guessing) =====
+function updateBottomSpace(){
+  const m = document.getElementById('mobileControls');
+  if(!m) return;
 
+  const rect = m.getBoundingClientRect();
+  const style = getComputedStyle(m);
+
+  // mctl 自己的高度 + 它离底部的距离 + 一点点安全边距
+  const bottom = parseFloat(style.bottom || '0') || 0;
+  const gap = 12; // 你想更紧就 8，更松就 16
+
+  const pad = Math.ceil(rect.height + bottom + gap);
+  document.documentElement.style.setProperty('--mctl-pad', pad + 'px');
+}
+
+// 页面加载、窗口变化、旋转都更新
+updateBottomSpace();
+window.addEventListener('resize', updateBottomSpace);
+window.addEventListener('orientationchange', updateBottomSpace);
   function startRepeat(code, ms){
     stopRepeat();
     handleControl(code); // 先触发一次
