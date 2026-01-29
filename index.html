@@ -336,6 +336,21 @@
 .modal-btn.ghost{
   background: rgba(255,255,255,.06);
 }
+/* ===== Summary Modal ===== */
+.summary{
+  margin-top: 8px;
+}
+.summary .row{
+  margin: 8px 0;
+  font-size: 14px;
+}
+.summary small{
+  display:block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
 /* ===== Game Over Toast ===== */
 .toast{
   position: fixed;
@@ -569,6 +584,17 @@
       </div>
     </div>
   </div>
+<!-- Game Summary modal -->
+<div id="summaryModal" class="modal" aria-hidden="true">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="summaryTitle">
+    <div class="modal-title" id="summaryTitle">本局总结 📊</div>
+    <div id="summaryBody" class="modal-desc" style="margin-bottom:12px"></div>
+    <div class="modal-actions">
+      <button id="summaryClose" class="modal-btn ghost">关闭</button>
+      <button id="summaryRestart" class="modal-btn">再来一局 ▶</button>
+    </div>
+  </div>
+</div>
 <script>
 (() => {
   const W = 10, H = 20;
@@ -594,7 +620,10 @@ const endlessModal = document.getElementById('endlessModal');
 const endlessDesc = document.getElementById('endlessDesc');
 const endlessContinue = document.getElementById('endlessContinue');
 const endlessToPro = document.getElementById('endlessToPro');
- 
+const summaryModal = document.getElementById('summaryModal');
+const summaryBody  = document.getElementById('summaryBody');
+const summaryClose = document.getElementById('summaryClose');
+const summaryRestart = document.getElementById('summaryRestart');
   const stageModal = document.getElementById('stageModal');
   const stageDesc = document.getElementById('stageDesc');
   const stageNext = document.getElementById('stageNext');
@@ -650,6 +679,11 @@ const endlessToPro = document.getElementById('endlessToPro');
   let piece, nextKind;
   let score=0, lines=0, level=1;
   let paused=false, gameOver=false;
+  // ===== Stats for summary =====
+let piecesLocked = 0;
+let hardDrops = 0;
+let softDrops = 0;
+let gameStartAt = 0;
   let stage = 1;
 let stageTarget = 500;
 let proMode = false;        // 大神模式：用你原来的 level 速度机制
@@ -726,6 +760,71 @@ function closeEndlessModal(){
   endlessModal.classList.remove('show');
   endlessModal.setAttribute('aria-hidden','true');
 }
+function openSummaryModal(){
+  if(!summaryModal) return;
+  renderSummary();
+  summaryModal.classList.add('show');
+  summaryModal.setAttribute('aria-hidden','false');
+}
+function closeSummaryModal(){
+  if(!summaryModal) return;
+  summaryModal.classList.remove('show');
+  summaryModal.setAttribute('aria-hidden','true');
+}
+
+function fmtTime(ms){
+  const s = Math.max(0, Math.floor(ms/1000));
+  const mm = String(Math.floor(s/60)).padStart(2,'0');
+  const ss = String(s%60).padStart(2,'0');
+  return `${mm}:${ss}`;
+}
+
+function modeLabel(){
+  const m = [];
+  if(proMode) m.push('大神');
+  if(noobMode) m.push('菜鸡');
+  if(endlessMode) m.push('无尽');
+  if(mercyOn) m.push('求饶');
+  return m.length ? m.join(' / ') : '普通';
+}
+
+function renderSummary(){
+  if(!summaryBody) return;
+  const dur = gameStartAt ? (Date.now() - gameStartAt) : 0;
+
+  summaryBody.innerHTML = `
+    <div class="summary">
+      <div class="row"><span>得分</span><b>${score}</b></div>
+      <div class="row"><span>消行</span><b>${lines}</b></div>
+      <div class="row"><span>关卡</span><b>${stage}</b></div>
+      <div class="row"><span>等级</span><b>${level}</b></div>
+      <div class="row"><span>落块数</span><b>${piecesLocked}</b></div>
+      <div class="row"><span>硬降次数</span><b>${hardDrops}</b></div>
+      <div class="row"><span>软降次数</span><b>${softDrops}</b></div>
+      <div class="row"><span>用时</span><b>${fmtTime(dur)}</b></div>
+      <div class="row"><span>模式</span><b>${modeLabel()}</b></div>
+      <small>提示：想更强？菜就多练 😈</small>
+    </div>
+  `;
+}
+
+// summary buttons
+summaryClose?.addEventListener('click', () => closeSummaryModal());
+summaryRestart?.addEventListener('click', () => {
+  closeSummaryModal();
+  if(!started){
+    startGame();
+  }else{
+    reset();
+    paused = false;
+    overlayEl.classList.remove('show');
+  }
+});
+
+// 点击遮罩关闭
+summaryModal?.addEventListener('click', (e) => {
+  if(e.target === summaryModal) closeSummaryModal();
+});
 
 function checkEndlessCap(){
   if(!endlessMode) return;
@@ -733,7 +832,7 @@ function checkEndlessCap(){
   if(score >= 1000){
     endlessLocked = true;
     paused = true;
-    overlayEl.textContent = "2000+";
+    overlayEl.textContent = "1000+";
     overlayEl.classList.add('show');
     if(endlessDesc) endlessDesc.textContent = "再玩就更菜了";
     openEndlessModal();
@@ -751,6 +850,9 @@ function checkEndlessCap(){
       overlayEl.textContent = "GAME OVER (R)";
       overlayEl.classList.add('show');
       showToast("菜就多练");
+      setTimeout(() => {
+  if(gameOver) openSummaryModal();
+}, 1350);
     }
   }
 
@@ -767,6 +869,7 @@ function checkEndlessCap(){
   }
 
   function lock(){
+    piecesLocked++;
   for(const [cy,cx] of rotations[piece.kind][piece.r]){
     board[piece.y+cy][piece.x+cx] = 1;
   }
@@ -840,6 +943,7 @@ function applyNoobGravity(){
   }
 
   function hardDrop(){
+    hardDrops++;
     const gy = ghostY();
     score += Math.max(0, gy - piece.y) * 2;
     piece.y = gy;
@@ -911,6 +1015,11 @@ for(let y=0;y<H;y++){
   function reset(){
     board = Array.from({length:H}, () => Array(W).fill(0));
     score=0; lines=0; level=1;
+    piecesLocked = 0;
+hardDrops = 0;
+softDrops = 0;
+gameStartAt = Date.now();
+closeSummaryModal();
     paused=false; gameOver=false;
     stageCleared = false;
   clearingAll = false;
@@ -984,7 +1093,7 @@ const interval = baseInterval * mercyMultiplier;
     } else if(code === 'ArrowRight'){
       if(canPlace(piece, 1,0,0)) piece.x += 1;
     } else if(code === 'ArrowDown'){
-        if(canPlace(piece,0,1,0)) { piece.y += 1; score += 1; updateHUD(); checkStage(); checkEndlessCap(); }
+        if(canPlace(piece,0,1,0)) { piece.y += 1; score += 1; softDrops++; updateHUD(); checkStage(); checkEndlessCap(); }
       else lock();
     } else if(code === 'ArrowUp'){
   tryRotate(1);
@@ -1246,6 +1355,7 @@ const btnStart = document.getElementById('btnStart');
 function startGame(){
   started = true;
   startScreen?.classList.remove('show');
+  gameStartAt = Date.now();
   reset();
 }
 
