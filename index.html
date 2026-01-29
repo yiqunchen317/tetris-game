@@ -205,10 +205,25 @@
     align-items: flex-start;
     padding: calc(10px + env(safe-area-inset-top)) 0 calc(var(--mctl-pad, 0px) + env(safe-area-inset-bottom));
   }
+/* Show the stats panel under the board on phone (keep board/control sizes the same) */
+.side{
+  display: flex;
+  flex-direction: column;
+  width: min(560px, 98vw);
+  max-width: 98vw;
+  padding: 0;
+  gap: 10px;
+  margin-top: 10px;
+}
 
-  /* Hide the right panel on phone to give the board maximum space */
-  .side{ display: none; }
+/* Only keep the first TETRIS stats card on phone */
+.side .card:nth-child(2){ display:none; }
 
+/* Make the stats card compact */
+.side .card{
+  padding: 10px 12px;
+}
+.side .row{ font-size: 13px; }
   .wrap {
     grid-template-columns: 1fr !important;
     justify-items: center;
