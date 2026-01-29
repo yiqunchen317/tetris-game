@@ -190,15 +190,20 @@
     }
     /* ===== Fix mobile alignment ===== */
     @media (max-width: 600px) {
-  /* Make the board as large as the phone width allows */
+  /* Make the board as large as the phone width/height allows */
   :root{
-    --cell: clamp(22px, calc((100vw - 40px - var(--gap) * 9) / 10), 34px);
+    /* Fit by width */
+    --cellW: calc((100vw - 28px - var(--gap) * 9) / 10);
+    /* Fit by height: viewport height minus safe areas and reserved controls space */
+    --cellH: calc((100svh - env(safe-area-inset-top) - 14px - var(--mctl-pad, 0px) - env(safe-area-inset-bottom) - var(--gap) * 19) / 20);
+    /* Choose the smaller one so the whole board fits */
+    --cell: clamp(16px, min(var(--cellW), var(--cellH)), 30px);
   }
 
   body {
     justify-content: flex-start;
     align-items: flex-start;
-    padding: 10px 0 calc(var(--mctl-pad, 0px) + env(safe-area-inset-bottom));
+    padding: calc(10px + env(safe-area-inset-top)) 0 calc(var(--mctl-pad, 0px) + env(safe-area-inset-bottom));
   }
 
   /* Hide the right panel on phone to give the board maximum space */
@@ -223,8 +228,8 @@
     grid-template-rows: auto auto;
     gap: 10px;
     padding: 12px;
-    width: min(520px, 96vw);
-    max-width: 96vw;
+    width: min(560px, 98vw);
+    max-width: 98vw;
     justify-items: center;
     align-items: center;
     touch-action: none;
