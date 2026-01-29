@@ -189,11 +189,34 @@
       .mbtn.wide{ min-width: 104px; }
     }
     /* ===== Fix mobile alignment ===== */
-@media (max-width: 600px) {
+    @media (max-width: 600px) {
+  /* Make the board as large as the phone width allows */
+  :root{
+    --cell: clamp(22px, calc((100vw - 40px - var(--gap) * 9) / 10), 34px);
+  }
+
   body {
     justify-content: flex-start;
     align-items: flex-start;
-      /* ===== Mobile controls layout (phone only) ===== */
+    padding: 10px 0 calc(var(--mctl-pad, 0px) + env(safe-area-inset-bottom));
+  }
+
+  /* Hide the right panel on phone to give the board maximum space */
+  .side{ display: none; }
+
+  .wrap {
+    grid-template-columns: 1fr !important;
+    justify-items: center;
+    width: 100%;
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .board {
+    margin: 0 auto;
+  }
+
+  /* ===== Mobile controls layout (phone only) ===== */
   .mctl{
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 14px 1fr 1fr;
@@ -205,45 +228,20 @@
     justify-items: center;
     align-items: center;
     touch-action: none;
+    bottom: 10px;
   }
 
-  /* D-pad triangle: left/right slightly higher, down lower */
   .mctl .mbtn[data-act="left"]{ grid-column: 1; grid-row: 1; }
   .mctl .mbtn[data-act="right"]{ grid-column: 3; grid-row: 1; }
   .mctl .mbtn[data-act="down"]{ grid-column: 2; grid-row: 2; }
 
-  /* Actions on the right: rotate left of DROP */
   .mctl .mbtn[data-act="rotate"]{ grid-column: 5; grid-row: 1; }
   .mctl .mbtn.wide[data-act="drop"]{ grid-column: 6; grid-row: 1; }
 
-  /* Hide pause from bottom bar on phone (use right panel Pause button instead) */
   .mctl .mbtn[data-act="pause"]{ display: none; }
 
-  .mctl{ bottom: 10px; }
-  }
-
-  .wrap {
-    grid-template-columns: 1fr !important;
-    justify-items: center;
-    width: 100%;
-    padding: 12px;
-  }
-
-  .board {
-    margin: 0 auto;
-  }
-
-  .side {
-    width: 100%;
-    max-width: 420px;
-    margin: 12px auto 0;
-  }
-
-  .mctl {
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: 10px;
-  }
+  .mbtn{ min-width: 70px; height: 60px; font-size: 18px; }
+  .mbtn.wide{ min-width: 150px; }
 }
 /* ===== Mercy Modal ===== */
 .modal{
@@ -399,6 +397,36 @@
   60%  { transform: scale(.9);   opacity: .45; filter: brightness(1.2) blur(1px); }
   100% { transform: scale(.55);  opacity: 0;   filter: brightness(.8) blur(2px); }
 }
+/* ===== Faded HUD inside board ===== */
+.hud{
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  z-index: 4;
+  pointer-events: none;
+  opacity: .35;
+  text-shadow: 0 10px 30px rgba(0,0,0,.55);
+}
+
+.hud-row{
+  display:flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 16px;
+  color: rgba(229,231,235,.75);
+  margin: 6px 0;
+}
+
+.hud-row b{
+  font-size: 22px;
+  font-weight: 900;
+  color: rgba(229,231,235,.95);
+}
+
+@media (max-width: 520px){
+  .hud-row{ font-size: 15px; }
+  .hud-row b{ font-size: 20px; }
+}
   </style>
 </head>
 
@@ -407,6 +435,13 @@
     <div class="board">
       <div id="grid" class="grid" aria-label="tetris grid"></div>
       <div id="overlay" class="overlay">PAUSED</div>
+      <!-- Faded HUD inside the board -->
+<div class="hud" aria-hidden="true">
+  <div class="hud-row"><span>Score</span><b id="hudScore">0</b></div>
+  <div class="hud-row"><span>Level</span><b id="hudLevel">1</b></div>
+  <div class="hud-row"><span>Lines</span><b id="hudLines">0</b></div>
+  <div class="hud-row"><span>Stage</span><b id="hudStage">1</b></div>
+</div>
       <!-- Start Screen -->
   <div id="startScreen" class="start show">
     <div class="start-card">
@@ -526,6 +561,10 @@
   const levelEl = document.getElementById('level');
   const linesEl = document.getElementById('lines');
   const stageEl = document.getElementById('stage');
+  const hudScoreEl = document.getElementById('hudScore');
+const hudLevelEl = document.getElementById('hudLevel');
+const hudLinesEl = document.getElementById('hudLines');
+const hudStageEl = document.getElementById('hudStage');
   const btnPro = document.getElementById('btnPro');
   const btnNoob = document.getElementById('btnNoob');
   const btnEndless = document.getElementById('btnEndless');
@@ -802,6 +841,11 @@ function updateHUD(){
   levelEl.textContent = level;
   linesEl.textContent = lines;
   if(stageEl) stageEl.textContent = stage;
+
+  if(hudScoreEl) hudScoreEl.textContent = score;
+  if(hudLevelEl) hudLevelEl.textContent = level;
+  if(hudLinesEl) hudLinesEl.textContent = lines;
+  if(hudStageEl) hudStageEl.textContent = stage;
 }
 
   function draw(){
