@@ -185,7 +185,6 @@
     .mbtn:active{ transform: scale(.96); }
 
     @media (max-width: 520px){
-      .mctl{ gap: 8px; padding: 9px; }
       .mbtn{ min-width: 56px; height: 52px; font-size: 16px; }
       .mbtn.wide{ min-width: 104px; }
     }
@@ -194,6 +193,33 @@
   body {
     justify-content: flex-start;
     align-items: flex-start;
+      /* ===== Mobile controls layout (phone only) ===== */
+  .mctl{
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 14px 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 10px;
+    padding: 12px;
+    width: min(520px, 96vw);
+    max-width: 96vw;
+    justify-items: center;
+    align-items: center;
+    touch-action: none;
+  }
+
+  /* D-pad triangle: left/right slightly higher, down lower */
+  .mctl .mbtn[data-act="left"]{ grid-column: 1; grid-row: 1; }
+  .mctl .mbtn[data-act="right"]{ grid-column: 3; grid-row: 1; }
+  .mctl .mbtn[data-act="down"]{ grid-column: 2; grid-row: 2; }
+
+  /* Actions on the right: rotate left of DROP */
+  .mctl .mbtn[data-act="rotate"]{ grid-column: 5; grid-row: 1; }
+  .mctl .mbtn.wide[data-act="drop"]{ grid-column: 6; grid-row: 1; }
+
+  /* Hide pause from bottom bar on phone (use right panel Pause button instead) */
+  .mctl .mbtn[data-act="pause"]{ display: none; }
+
+  .mctl{ bottom: 10px; }
   }
 
   .wrap {
@@ -624,6 +650,7 @@ function winStage(){
 function checkStage(){
   if(proMode) return;
   if(stageCleared) return;
+  if(endlessMode) return;
   stageTarget = stageTargetFor(stage);
   if(score >= stageTarget){
     winStage();
@@ -643,7 +670,7 @@ function closeEndlessModal(){
 function checkEndlessCap(){
   if(!endlessMode) return;
   if(endlessLocked) return;
-  if(score >= 200){
+  if(score >= 1000){
     endlessLocked = true;
     paused = true;
     overlayEl.textContent = "2000+";
@@ -994,25 +1021,52 @@ document.addEventListener('touchend', (e) => {
   if(now - lastTouchEnd <= 300) e.preventDefault();
   lastTouchEnd = now;
 }, { passive: false });
-btnPro?.addEventListener('click', () => {
-  proMode = !proMode;
-  if(btnPro) btnPro.textContent = proMode ? '大神模式 ✅（慢慢变快）' : '大神模式 ⚡（慢慢变快）';
-});
-btnNoob?.addEventListener('click', () => {
-  noobMode = !noobMode;
-  if(btnNoob) btnNoob.textContent = noobMode
-    ? '菜鸡模式 ✅（悬空自动落）'
-    : '菜鸡模式 🐣（悬空自动落）';
-});
-btnEndless?.addEventListener('click', () => {
-  endlessMode = !endlessMode;
+function turnOffAllModes(){
+  // 关求饶
+  if(mercyOn) setMercy(false);
+
+  // 关其他模式
+  proMode = false;
+  noobMode = false;
+  endlessMode = false;
   endlessLocked = false;
+  closeEndlessModal?.();
+  overlayEl.classList.remove('show');
+  overlayEl.textContent = "";
 
-  if(btnEndless) btnEndless.textContent = endlessMode
-    ? '无尽模式 ✅（只出 O/I）'
-    : '无尽模式 ♾️（只出 O/I）';
+  // 还原按钮文字（按你现在的文案写）
+  if(btnPro) btnPro.textContent = '大神模式 ⚡（慢慢变快）';
+  if(btnNoob) btnNoob.textContent = '菜鸡模式 🐣（悬空自动落）';
+  if(btnEndless) btnEndless.textContent = '无尽模式 ♾️（爽死你）';
+}
+btnPro?.addEventListener('click', () => {
+  const next = !proMode;   // 记录：你是不是想开它
+  turnOffAllModes();       // ✅ 先关掉其他模式
+  if(next){
+    proMode = true;
+    if(btnPro) btnPro.textContent = '大神模式 ✅（慢慢变快）';
+  }
+});
 
-  // 开关无尽模式都重开一局更清爽
+btnNoob?.addEventListener('click', () => {
+  const next = !noobMode;
+  turnOffAllModes();
+  if(next){
+    noobMode = true;
+    if(btnNoob) btnNoob.textContent = '菜鸡模式 ✅（悬空自动落）';
+  }
+});
+
+btnEndless?.addEventListener('click', () => {
+  const next = !endlessMode;
+  turnOffAllModes();
+  if(next){
+    endlessMode = true;
+    endlessLocked = false;
+    if(btnEndless) btnEndless.textContent = '无尽模式 ✅（只出 O/I）';
+  }
+
+  // 开/关无尽都重开一局更清爽
   started = true;
   startScreen?.classList.remove('show');
   reset();
@@ -1103,9 +1157,13 @@ stageNext?.addEventListener('click', () => {
   }
 
   btnMercy.addEventListener('click', () => {
-    if(mercyOn) setMercy(false);
-    else openMercy();
-  });
+  if(mercyOn){
+    setMercy(false);
+    return;
+  }
+  turnOffAllModes(); // ✅ 开求饶前先关掉其他模式
+  openMercy();
+});
 
   mercyCancel.addEventListener('click', closeMercy);
   mercyOk.addEventListener('click', tryEnableMercy);
