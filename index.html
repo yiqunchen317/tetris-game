@@ -3,6 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#0b0f17" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Tetris - HTML/CSS/JS</title>
   <style>
     html, body{
@@ -20,6 +23,61 @@
       --shadow: rgba(0,0,0,.4);
     }
     *{box-sizing:border-box}
+    /* ===== Splash (Launch Screen) ===== */
+.splash{
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(1200px 600px at 50% 0%, #152045 0%, var(--bg) 55%);
+  transition: opacity .28s ease, transform .28s ease;
+}
+.splash.hide{
+  opacity: 0;
+  transform: scale(1.02);
+  pointer-events: none;
+}
+.splash-card{
+  width: min(420px, 86vw);
+  text-align: center;
+  padding: 18px;
+  border-radius: 18px;
+  background: rgba(16,24,39,.65);
+  border: 1px solid rgba(255,255,255,.10);
+  box-shadow: 0 18px 50px rgba(0,0,0,.45);
+  backdrop-filter: blur(10px);
+}
+.splash-logo{
+  font-weight: 950;
+  letter-spacing: 2px;
+  font-size: 34px;
+}
+.splash-sub{
+  color: var(--muted);
+  font-size: 13px;
+}
+.splash-bar{
+  margin: 14px auto 0;
+  width: min(280px, 72vw);
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.10);
+  overflow: hidden;
+}
+.splash-bar i{
+  display:block;
+  height:100%;
+  width:35%;
+  background: rgba(255,255,255,.25);
+  animation: splashMove 1s infinite;
+}
+@keyframes splashMove{
+  0%{transform:translateX(-10%)}
+  50%{transform:translateX(180%)}
+  100%{transform:translateX(-10%)}
+}
     body{
       margin:0;
       min-height:100vh;
@@ -467,6 +525,14 @@
 </head>
 
 <body>
+  <!-- Splash / Launch Screen -->
+<div id="splash" class="splash">
+  <div class="splash-card">
+    <div class="splash-logo">TETRIS</div>
+    <div class="splash-sub">正在加载…</div>
+    <div class="splash-bar"><i></i></div>
+  </div>
+</div>
   <div class="wrap">
     <div class="board">
       <div id="grid" class="grid" aria-label="tetris grid"></div>
@@ -597,6 +663,17 @@
 </div>
 <script>
 (() => {
+    // ===== Splash control =====
+    const splashEl = document.getElementById('splash');
+  const splashStart = Date.now();
+  function hideSplash(){
+    if(!splashEl) return;
+    const wait = Math.max(0, 350 - (Date.now() - splashStart));
+    setTimeout(() => {
+      splashEl.classList.add('hide');
+      setTimeout(() => splashEl.remove(), 320);
+    }, wait);
+  }
   const W = 10, H = 20;
 
   // 0 empty, 1 filled
@@ -1382,6 +1459,11 @@ tick = function(t){
 // 初始：不自动 reset，不开始下落
 startScreen?.classList.add('show');
 requestAnimationFrame(tick);
+
+// 启动完成后隐藏 splash
+requestAnimationFrame(() => hideSplash());
+window.addEventListener('load', hideSplash, { once:true });
+
 })();
 </script>
 </body>
