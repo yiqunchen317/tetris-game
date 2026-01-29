@@ -668,7 +668,7 @@
   const splashStart = Date.now();
   function hideSplash(){
     if(!splashEl) return;
-    const wait = Math.max(0, 350 - (Date.now() - splashStart));
+    const wait = Math.max(0, 800 - (Date.now() - splashStart));
     setTimeout(() => {
       splashEl.classList.add('hide');
       setTimeout(() => splashEl.remove(), 320);
