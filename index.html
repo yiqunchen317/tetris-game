@@ -10,6 +10,7 @@
   <style>
     html, body{
   overscroll-behavior: none;
+  background-color: #0b0f17; /* 防止首帧黑闪 */
 }
     :root{
       --cell: 28px;
@@ -31,6 +32,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  background-color: #0b0f17; /* 兜底，防黑闪 */
   background: radial-gradient(1200px 600px at 50% 0%, #152045 0%, var(--bg) 55%);
   transition: opacity .28s ease, transform .28s ease;
 }
