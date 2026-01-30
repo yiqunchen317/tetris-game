@@ -962,6 +962,7 @@ const summaryRestart = document.getElementById('summaryRestart');
   let paused=false, gameOver=false;
   let gameOverPendingSave = false; // GAME OVER 弹总结，但还没写历史（给“继续游戏”留机会）
   // ===== Stats for summary =====
+  let summaryShown = false; // 是否已经弹过本局总结
 let piecesLocked = 0;
 let hardDrops = 0;
 let softDrops = 0;
@@ -1054,6 +1055,7 @@ function closeSummaryModal(){
   summaryModal.setAttribute('aria-hidden','true');
 }
 function continueAfterGameOver(){
+  summaryShown = false;
   if(!gameOver) return;
 
   // 继续：不重开，不清分数/关卡/等级
@@ -1643,6 +1645,7 @@ function checkEndlessCap(){
 setTimeout(() => {
   if(gameOver){
     gameOverPendingSave = true;
+    summaryShown = true;
     openSummaryModal();
   }
 }, 1350);
@@ -1849,6 +1852,7 @@ closeSummaryModal();
 savedThisGame = false;
 resetModeTrail();
 gameOverPendingSave = false;
+summaryShown = false;
     paused=false; gameOver=false;
     stageCleared = false;
   clearingAll = false;
@@ -1996,7 +2000,7 @@ window.addEventListener('orientationchange', updateBottomSpace);
   e.preventDefault();
 
   // ✅ 只有 GAME OVER 后，点手机 DROP 才重开并保留刚才的 stage/level（速度）
-  if(act === 'drop' && gameOver){
+  if(act === 'drop' && gameOver && summaryShown){
     if(gameOverPendingSave){
       saveRunOnce();
       gameOverPendingSave = false;
@@ -2014,6 +2018,7 @@ window.addEventListener('orientationchange', updateBottomSpace);
     paused = false;
     overlayEl.classList.remove('show');
     overlayEl.textContent = "";
+    summaryShown = false;
     return;
   }
 
