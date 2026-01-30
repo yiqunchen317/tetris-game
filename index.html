@@ -298,19 +298,24 @@
 
   /* ===== Mobile controls layout (phone only) ===== */
   .mctl{
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 14px 1fr 1fr;
-    grid-template-rows: auto auto;
-    gap: 10px;
-    padding: 12px;
-    width: min(560px, 98vw);
-    max-width: 98vw;
-    justify-items: center;
-    align-items: center;
-    touch-action: none;
-    bottom: 10px;
-  }
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
 
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 14px 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 10px;
+  padding: 12px;
+  width: min(560px, 98vw);
+  max-width: 98vw;
+  justify-items: center;
+  align-items: center;
+  touch-action: none;
+
+  bottom: calc(env(safe-area-inset-bottom) + 0px);
+  z-index: 9999;
+}
   .mctl .mbtn[data-act="left"]{ grid-column: 1; grid-row: 1; }
   .mctl .mbtn[data-act="right"]{ grid-column: 3; grid-row: 1; }
   .mctl .mbtn[data-act="down"]{ grid-column: 2; grid-row: 2; }
@@ -319,9 +324,9 @@
   .mctl .mbtn.wide[data-act="drop"]{ grid-column: 6; grid-row: 1; }
 
   .mctl .mbtn[data-act="pause"]{ display: none; }
-    /* back to the original (smaller) touch button size */
-    .mbtn{ min-width: 52px; height: 48px; font-size: 16px; }
-  .mbtn.wide{ min-width: 92px; }
+    /* bigger touch buttons on phone */
+.mbtn{ min-width: 68px; height: 58px; font-size: 18px; }
+.mbtn.wide{ min-width: 140px; }
 }
 /* ===== Mercy Modal ===== */
 .modal{
@@ -1916,23 +1921,19 @@ const interval = baseInterval * mercyMultiplier;
   // ===== Mobile buttons =====
   const mctl = document.getElementById('mobileControls');
   let repeatTimer = null;
-// ===== Auto reserve space for mobile controls (no guessing) =====
+  // ===== Auto reserve space for mobile controls (FIXED) =====
 function updateBottomSpace(){
   const m = document.getElementById('mobileControls');
   if(!m) return;
 
   const rect = m.getBoundingClientRect();
-  const style = getComputedStyle(m);
+  const gap = 12; // 想更紧就 8，更松就 16
+  const pad = Math.ceil(rect.height + gap);
 
-  // mctl 自己的高度 + 它离底部的距离 + 一点点安全边距
-  const bottom = parseFloat(style.bottom || '0') || 0;
-  const gap = 12; // 你想更紧就 8，更松就 16
-
-  const pad = Math.ceil(rect.height + bottom + gap);
   document.documentElement.style.setProperty('--mctl-pad', pad + 'px');
 }
 
-// 页面加载、窗口变化、旋转都更新
+// 启动/窗口变化/旋转都更新
 updateBottomSpace();
 window.addEventListener('resize', updateBottomSpace);
 window.addEventListener('orientationchange', updateBottomSpace);
