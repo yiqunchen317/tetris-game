@@ -590,9 +590,7 @@
   font-weight: 900;
   color: rgba(229,231,235,.95);
 }
-@media (max-width: 520px){
-  .modal{ align-items: flex-start; }
-}
+
 @media (max-width: 520px){
   .hud-row{ font-size: 15px; }
   .hud-row b{ font-size: 20px; }
@@ -1995,14 +1993,37 @@ window.addEventListener('orientationchange', updateBottomSpace);
       const code = actToCode(act);
 
       const onDown = (e) => {
-        e.preventDefault();
-        if(!code) return;
+  e.preventDefault();
 
-        // 左/右/下：长按连发
-        if(code === 'ArrowLeft' || code === 'ArrowRight') startRepeat(code, 90);
-        else if(code === 'ArrowDown') startRepeat(code, 60);
-        else handleControl(code); // 旋转/硬降/暂停：点一下即可
-      };
+  // ✅ 只有 GAME OVER 后，点手机 DROP 才重开并保留刚才的 stage/level（速度）
+  if(act === 'drop' && gameOver){
+    if(gameOverPendingSave){
+      saveRunOnce();
+      gameOverPendingSave = false;
+    }
+
+    const keepStage = stage;
+    const keepLevel = level;
+
+    closeSummaryModal();
+    reset();            // 会把 level/stage 清回 1
+    stage = keepStage;  // 恢复关卡
+    level = keepLevel;  // 恢复等级（速度）
+    updateHUD();
+
+    paused = false;
+    overlayEl.classList.remove('show');
+    overlayEl.textContent = "";
+    return;
+  }
+
+  if(!code) return;
+
+  // 左/右/下：长按连发
+  if(code === 'ArrowLeft' || code === 'ArrowRight') startRepeat(code, 90);
+  else if(code === 'ArrowDown') startRepeat(code, 60);
+  else handleControl(code); // 旋转/硬降/暂停：点一下即可
+};
 
       const onUp = (e) => {
         e.preventDefault();
