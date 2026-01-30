@@ -140,6 +140,12 @@
       border:none;
       opacity:.55;
     }
+    .cell.next{
+  border:none;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.10);
+  background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03));
+  opacity: .32;
+}
 
     .side{
       display:flex;
@@ -976,12 +982,22 @@ const summaryRestart = document.getElementById('summaryRestart');
   // 7-bag random
   let bag = [];
   const refillBag = () => {
-  const pool = endlessMode ? ["I","O"] : ORDER;
-  bag = pool.slice().sort(() => Math.random() - 0.5);
+  const pool = endlessMode ? ["I","O"] : ORDER.slice();
+  // Fisher–Yates shuffle
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  bag = pool;
 };
 
-  let piece, nextKind;
-  let score=0, lines=0, level=1;
+let piece, nextKind;
+
+// ===== In-board next piece preview (appears when current drops to row 4) =====
+let nextReveal = false;      // 是否已经把“下一块”漏到顶部显示
+let nextWaitingPiece = null; // { kind, r, x, y } 仅用于显示，不参与碰撞
+
+let score=0, lines=0, level=1;
   let paused=false, gameOver=false;
   let gameOverPendingSave = false; // GAME OVER 弹总结，但还没写历史（给“继续游戏”留机会）
   // ===== Stats for summary =====
@@ -1107,7 +1123,8 @@ for(let y=0; y<8; y++){
 const idx = Math.max(0, lockScoreHistory.length - 8);
 score = lockScoreHistory.length ? lockScoreHistory[idx] : baseScoreForStage(stage);
 updateHUD();
-
+nextReveal = false;
+nextWaitingPiece = null;
   // 尝试生成；如果还放不下就直接清空棋盘继续
   spawn();
   if(gameOver){
@@ -1676,6 +1693,9 @@ function checkEndlessCap(){
     if(bag.length === 0) refillBag();
     nextKind = bag.pop();
 
+    nextReveal = false;
+nextWaitingPiece = null;
+
     piece = { kind, r:0, x:3, y:0 };
     if(!canPlace(piece, 0, 0, 0)) {
       gameOver = true;
@@ -1704,6 +1724,19 @@ setTimeout(() => {
     }
     return true;
   }
+  // Reveal the next piece at the very top (visual-only) once the current piece reaches row 4.
+// Row 4 from top = y >= 3 (0-based).
+function maybeRevealNext(){
+  if(gameOver || paused || stageCleared) return;
+  if(!piece) return;
+  if(nextReveal) return;
+  if(typeof nextKind === 'undefined' || nextKind === null) return;
+
+  if(piece.y >= 3){
+    nextReveal = true;
+    nextWaitingPiece = { kind: nextKind, r: 0, x: 3, y: 0 };
+  }
+}
 
   function lock(){
     piecesLocked++;
@@ -1820,9 +1853,10 @@ function applyNoobGravity(){
     const gy = ghostY();
     score += Math.max(0, gy - piece.y) * 2;
     piece.y = gy;
-    updateHUD();
+updateHUD();
 checkStage();
 checkEndlessCap();
+maybeRevealNext();
 lock();
   }
 
@@ -1868,6 +1902,18 @@ for(let y=0;y<H;y++){
 }
 
     if(!gameOver){
+      // waiting next (visual-only, shown at the very top)
+if(nextReveal && nextWaitingPiece){
+  const rots = rotations[nextWaitingPiece.kind];
+  const r = 0;
+  for(const [cy,cx] of rots[r]){
+    const y = nextWaitingPiece.y + cy;
+    const x = nextWaitingPiece.x + cx;
+    if(y >= 0 && y < H && x >= 0 && x < W){
+      if(!board[y][x]) cells[y*W+x].classList.add('next');
+    }
+  }
+}
       // ghost
       const gy = ghostY();
       for(const [cy,cx] of rotations[piece.kind][piece.r]){
@@ -1904,7 +1950,9 @@ gameOverPendingSave = false;
 summaryShown = false;
 scoreBeforeGameOver = 0;
 lockScoreHistory = [];
-    paused=false; gameOver=false;
+nextReveal = false;
+nextWaitingPiece = null;
+paused=false; gameOver=false;
     stageCleared = false;
   clearingAll = false;
   closeStageModal();
@@ -1937,6 +1985,7 @@ const interval = baseInterval * mercyMultiplier;
       else lock();
     }
   }
+  maybeRevealNext();
   draw(); // ✅ 不管 clearing 与否都画，这样动画一直播放
 }
     requestAnimationFrame(tick);
@@ -1982,7 +2031,7 @@ const interval = baseInterval * mercyMultiplier;
     } else if(code === 'ArrowRight'){
       if(canPlace(piece, 1,0,0)) piece.x += 1;
     } else if(code === 'ArrowDown'){
-        if(canPlace(piece,0,1,0)) { piece.y += 1; score += 1; softDrops++; updateHUD(); checkStage(); checkEndlessCap(); }
+      if(canPlace(piece,0,1,0)) { piece.y += 1; score += 1; softDrops++; updateHUD(); checkStage(); checkEndlessCap(); maybeRevealNext(); }
       else lock();
     } else if(code === 'ArrowUp'){
   tryRotate(1);
@@ -1992,7 +2041,9 @@ const interval = baseInterval * mercyMultiplier;
 } else if(code === 'Space'){
   hardDrop();
 }
-    draw();
+    maybeRevealNext();
+draw();
+
   }
 
   window.addEventListener('keydown', (e) => {
