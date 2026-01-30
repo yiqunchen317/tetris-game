@@ -985,6 +985,8 @@ const summaryRestart = document.getElementById('summaryRestart');
   let paused=false, gameOver=false;
   let gameOverPendingSave = false; // GAME OVER 弹总结，但还没写历史（给“继续游戏”留机会）
   // ===== Stats for summary =====
+  let scoreBeforeGameOver = 0; // 记录触发 GAME OVER 那一刻的分数（给“继续游戏”用）
+  let lockScoreHistory = []; // 记录每次“锁块前”的分数，用于继续游戏回退到 8 次操作前
   let summaryShown = false; // 是否已经弹过本局总结
 let piecesLocked = 0;
 let hardDrops = 0;
@@ -1101,6 +1103,10 @@ function continueAfterGameOver(){
 for(let y=0; y<8; y++){
   for(let x=0; x<W; x++) board[y][x] = 0;
 }
+// ✅ 继续游戏：回到“撤回最后 8 次锁块之前”的分数（只回退分数，其他不变）
+const idx = Math.max(0, lockScoreHistory.length - 8);
+score = lockScoreHistory.length ? lockScoreHistory[idx] : baseScoreForStage(stage);
+updateHUD();
 
   // 尝试生成；如果还放不下就直接清空棋盘继续
   spawn();
@@ -1550,11 +1556,22 @@ summaryRestart?.addEventListener('click', () => {
   closeSummaryModal();
   if(!started){
     startGame();
-  }else{
-    reset();
-    paused = false;
-    overlayEl.classList.remove('show');
-  }
+  } else {
+  const keepStage = stage;
+  const keepLevel = level;
+
+  reset(); // 会把 stage/level/score 清回 1/1/0
+
+  stage = keepStage;
+  level = keepLevel;
+
+  score = baseScoreForStage(stage); // ✅ 再来一局：分数回到当前关卡基础分
+  updateHUD();
+
+  paused = false;
+  overlayEl.classList.remove('show');
+overlayEl.textContent = "";
+}
 });
 
 // 点击遮罩关闭
@@ -1662,6 +1679,7 @@ function checkEndlessCap(){
     piece = { kind, r:0, x:3, y:0 };
     if(!canPlace(piece, 0, 0, 0)) {
       gameOver = true;
+      scoreBeforeGameOver = score;
       overlayEl.textContent = "GAME OVER (R)";
       overlayEl.classList.add('show');
       showToast("菜就多练");
@@ -1689,6 +1707,9 @@ setTimeout(() => {
 
   function lock(){
     piecesLocked++;
+    // 记录锁块前分数（硬降/软降加分已计入），用于“继续游戏”回退
+lockScoreHistory.push(score);
+if(lockScoreHistory.length > 80) lockScoreHistory.shift();
   for(const [cy,cx] of rotations[piece.kind][piece.r]){
     board[piece.y+cy][piece.x+cx] = 1;
   }
@@ -1808,6 +1829,11 @@ lock();
   function stageTargetFor(s){
   return 500 + (s-1)*300;
 }
+function baseScoreForStage(s){
+  // 当前关卡的基础分 = 上一关通关分；第1关基础分=0
+  if(!s || s <= 1) return 0;
+  return stageTargetFor(s - 1);
+}
 function stageIntervalFor(s){
   // 每关固定一个速度（越往后越快），想更快/更慢就改这里
   return Math.max(0.12, 0.60 - (s-1)*0.05);
@@ -1876,6 +1902,8 @@ savedThisGame = false;
 resetModeTrail();
 gameOverPendingSave = false;
 summaryShown = false;
+scoreBeforeGameOver = 0;
+lockScoreHistory = [];
     paused=false; gameOver=false;
     stageCleared = false;
   clearingAll = false;
@@ -2143,7 +2171,7 @@ stageNext?.addEventListener('click', () => {
   stageTarget = stageTargetFor(stage);
 
   // 每关重新开始（你要累计分数就删掉这3行）
-  score = 0;
+  score = baseScoreForStage(stage);
   lines = 0;
   level = 1;
   updateHUD();
