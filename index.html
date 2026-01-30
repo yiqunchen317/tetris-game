@@ -8,11 +8,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>群</title>
   <style>
-html, body{
+    html, body{
   overscroll-behavior: none;
-  background: radial-gradient(1200px 600px at 50% 0%, rgba(21,32,69,.65) 0%, var(--bg2) 55%), linear-gradient(180deg, var(--bg1), var(--bg2));
-  position: relative;
-min-height: 100%;
+  background-color: #0b0f17; /* 首帧兜底 */
+  background: radial-gradient(1200px 600px at 50% 0%, rgba(21,32,69,.65) 0%, var(--bg2) 55%),
+              linear-gradient(180deg, var(--bg1), var(--bg2));
 }
     :root{
       --cell: 28px;
@@ -25,8 +25,8 @@ min-height: 100%;
       --muted:#94a3b8;
       --shadow: rgba(0,0,0,.4);
       --hue: 220;
-  --bg1: hsl(var(--hue) 55% 16%);
-  --bg2: hsl(calc(var(--hue) + 25) 60% 10%);
+      --bg1: hsl(var(--hue) 55% 16%);
+      --bg2: hsl(calc(var(--hue) + 25) 60% 10%);
     }
     *{box-sizing:border-box}
     /* ===== Splash (Launch Screen) ===== */
@@ -37,7 +37,7 @@ min-height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  
+  background: transparent;
   transition: opacity .28s ease, transform .28s ease;
 }
 .splash.hide{
@@ -90,16 +90,15 @@ min-height: 100%;
       display:flex;
       align-items:center;
       justify-content:center;
+      background: radial-gradient(1200px 600px at 50% 0%, #152045 0%, var(--bg) 55%);
       color:var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", Arial;
-      background: transparent;
       padding-bottom: calc(var(--mctl-pad, 0px) + env(safe-area-inset-bottom));
       overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
     }
-    /* ===== Dynamic Starfield / Glow (lightweight) ===== */
-/* ===== Dynamic Starfield / Glow (stable on desktop & mobile) ===== */
+    /* ===== Dynamic Starfield / Glow (stable) ===== */
 .bgfx{
   position: fixed;
   inset: 0;
@@ -151,6 +150,8 @@ min-height: 100%;
 @media (prefers-reduced-motion: reduce){
   .bgfx::before, .bgfx::after{ animation: none !important; }
 }
+    
+
     .wrap{
       display:grid;
       grid-template-columns: auto 260px;
