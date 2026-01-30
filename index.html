@@ -8,9 +8,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>群</title>
   <style>
-    html, body{
+html, body{
   overscroll-behavior: none;
-       background-color: #0b0f17; /* 防止首帧黑闪 */
+  background: radial-gradient(1200px 600px at 50% 0%, rgba(21,32,69,.65) 0%, var(--bg2) 55%), linear-gradient(180deg, var(--bg1), var(--bg2));
+  position: relative;
+min-height: 100%;
 }
     :root{
       --cell: 28px;
@@ -22,6 +24,9 @@
       --text: #e5e7eb;
       --muted:#94a3b8;
       --shadow: rgba(0,0,0,.4);
+      --hue: 220;
+  --bg1: hsl(var(--hue) 55% 16%);
+  --bg2: hsl(calc(var(--hue) + 25) 60% 10%);
     }
     *{box-sizing:border-box}
     /* ===== Splash (Launch Screen) ===== */
@@ -32,7 +37,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(1200px 600px at 50% 0%, #152045 0%, var(--bg) 55%);
+  
   transition: opacity .28s ease, transform .28s ease;
 }
 .splash.hide{
@@ -85,14 +90,67 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      background: radial-gradient(1200px 600px at 50% 0%, #152045 0%, var(--bg) 55%);
       color:var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", Arial;
+      background: transparent;
       padding-bottom: calc(var(--mctl-pad, 0px) + env(safe-area-inset-bottom));
       overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
     }
+    /* ===== Dynamic Starfield / Glow (lightweight) ===== */
+/* ===== Dynamic Starfield / Glow (stable on desktop & mobile) ===== */
+.bgfx{
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.bgfx::before{
+  content:"";
+  position: absolute;
+  inset: -20vh -20vw;
+  opacity: .65;
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,.55) 0 1px, transparent 2px),
+    radial-gradient(1px 1px at 70% 20%, rgba(255,255,255,.35) 0 1px, transparent 2px),
+    radial-gradient(1px 1px at 40% 80%, rgba(255,255,255,.45) 0 1px, transparent 2px),
+    radial-gradient(1px 1px at 85% 70%, rgba(255,255,255,.30) 0 1px, transparent 2px),
+    radial-gradient(1px 1px at 10% 65%, rgba(255,255,255,.35) 0 1px, transparent 2px);
+  background-size: 320px 320px;
+  filter: drop-shadow(0 0 6px rgba(255,255,255,.08));
+  animation: starsDrift 18s linear infinite;
+  will-change: transform;
+}
+
+.bgfx::after{
+  content:"";
+  position: absolute;
+  inset: -10vh -10vw;
+  opacity: .85;
+  background:
+    radial-gradient(900px 520px at 20% 10%, hsla(var(--hue) 80% 60% / .16), transparent 60%),
+    radial-gradient(860px 520px at 85% 25%, hsla(calc(var(--hue) + 40) 85% 60% / .14), transparent 62%),
+    radial-gradient(980px 640px at 50% 95%, hsla(calc(var(--hue) + 15) 85% 55% / .12), transparent 60%);
+  animation: glowPulse 6.5s ease-in-out infinite;
+  will-change: opacity, transform;
+  mix-blend-mode: screen;
+}
+
+@keyframes starsDrift{
+  from{ transform: translate3d(0,0,0); }
+  to{ transform: translate3d(-8vw, -14vh, 0); }
+}
+@keyframes glowPulse{
+  0%,100%{ opacity: .65; transform: translate3d(0,0,0) scale(1); }
+  50%{ opacity: .95; transform: translate3d(0,-1vh,0) scale(1.02); }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .bgfx::before, .bgfx::after{ animation: none !important; }
+}
     .wrap{
       display:grid;
       grid-template-columns: auto 260px;
@@ -104,6 +162,8 @@
       box-shadow: 0 18px 40px var(--shadow);
       backdrop-filter: blur(10px);
       margin-bottom: 0;
+      position: relative;
+z-index: 1;
     }
     .board{
       position:relative;
@@ -479,6 +539,27 @@
   font-size: 12px;
   color: var(--muted);
 }
+/* ===== Line clear particles ===== */
+.particle{
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.85);
+  pointer-events: none;
+  animation: particleFly .45s ease-out forwards;
+}
+
+@keyframes particleFly{
+  from{
+    transform: translate(0,0) scale(1);
+    opacity: 1;
+  }
+  to{
+    transform: translate(var(--dx), var(--dy)) scale(.2);
+    opacity: 0;
+  }
+}
 /* ===== Line clear animation ===== */
 /* ===== Line clear animation ===== */
 .cell.clearing{
@@ -526,6 +607,7 @@
 </head>
 
 <body>
+  <div class="bgfx" aria-hidden="true"></div>
   <!-- Splash / Launch Screen -->
 <div id="splash" class="splash">
   <div class="splash-card">
@@ -954,6 +1036,35 @@ function checkEndlessCap(){
   const didClear = clearLines();
   if(!didClear) spawn(); // 没消除才立刻出下一块
 }
+// 粒子爆散效果
+function spawnParticlesForRow(rowY){
+  const boardEl = document.querySelector('.board');
+  if(!boardEl) return;
+
+  const rect = boardEl.getBoundingClientRect();
+  const cellSize = rect.width / 10;
+
+  for(let x = 0; x < 10; x++){
+    for(let i = 0; i < 4; i++){
+      const p = document.createElement('div');
+      p.className = 'particle';
+
+      const px = x * cellSize + cellSize / 2;
+      const py = rowY * cellSize + cellSize / 2;
+
+      const dx = (Math.random() - 0.5) * 120;
+      const dy = -Math.random() * 160;
+
+      p.style.left = px + 'px';
+      p.style.top  = py + 'px';
+      p.style.setProperty('--dx', dx + 'px');
+      p.style.setProperty('--dy', dy + 'px');
+
+      boardEl.appendChild(p);
+      setTimeout(() => p.remove(), 500);
+    }
+  }
+}
 
   function clearLines(){
   // 找出满行
@@ -974,6 +1085,10 @@ function checkEndlessCap(){
 
   // 播放动画一小段时间后，再真正删除行
   setTimeout(() => {
+    // 粒子爆散效果
+for(const y of clearingRows){
+  spawnParticlesForRow(y);
+}
     // 删除满行
     board = board.filter((_, y) => !clearingRows.has(y));
     while(board.length < H) board.unshift(Array(W).fill(0));
@@ -1049,6 +1164,8 @@ function updateHUD(){
   if(hudLevelEl) hudLevelEl.textContent = level;
   if(hudLinesEl) hudLinesEl.textContent = lines;
   if(hudStageEl) hudStageEl.textContent = stage;
+  const hue = 210 + Math.min(140, Math.floor(score / 40));
+  document.documentElement.style.setProperty('--hue', String(hue));
 }
 
   function draw(){
