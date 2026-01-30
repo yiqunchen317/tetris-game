@@ -82,6 +82,7 @@
     body{
       margin:0;
       min-height:100vh;
+      min-height: 100svh;
       display:flex;
       align-items:center;
       justify-content:center;
@@ -151,6 +152,10 @@
       border:1px solid rgba(255,255,255,.08);
       border-radius:14px;
       padding:12px;
+
+      margin-left: auto;
+  margin-right: auto;
+  width: 100%;
     }
     .title{
       font-weight:800;
@@ -249,6 +254,16 @@
     }
     /* ===== Fix mobile alignment ===== */
     @media (max-width: 600px) {
+      .side .card{
+  padding: 10px 12px;
+  /* 确保“各种模式按钮区”不产生横向溢出 */
+.side .btns{ width: 100%; }
+.side .btns button{ width: 100%; }
+
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
   /* Make the board as large as the phone width/height allows */
   :root{
     /* Fit by width */
@@ -260,19 +275,22 @@
   }
 
   body {
-    justify-content: flex-start;
-    align-items: flex-start;
-    padding: calc(10px + env(safe-area-inset-top)) 0 calc(var(--mctl-pad, 0px) + env(safe-area-inset-bottom));
+    justify-content: center;
+  align-items: center;
+  min-height: 100svh;
+  padding: calc(10px + env(safe-area-inset-top)) 8px calc(var(--mctl-pad, 0px) + env(safe-area-inset-bottom));
   }
 /* Show the stats panel under the board on phone (keep board/control sizes the same) */
 .side{
   display: flex;
   flex-direction: column;
-  width: min(560px, 98vw);
-  max-width: 98vw;
+  width: 100%;
+  max-width: 560px;
   padding: 0;
   gap: 10px;
   margin-top: 10px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Only keep the first TETRIS stats card on phone */
@@ -287,14 +305,19 @@
     grid-template-columns: 1fr !important;
     justify-items: center;
     width: 100%;
+max-width: 560px;
     padding: 12px;
     gap: 10px;
     margin-bottom: 0;
+    margin-left: auto;
+  margin-right: auto;
   }
 
-  .board {
-    margin: 0 auto;
-  }
+  .board{
+  margin: 0;
+  justify-self: center;
+  place-self: center;   /* ⭐ 关键：同时控制横向 + 纵向 */
+}
 
   /* ===== Mobile controls layout (phone only) ===== */
   .mctl{
