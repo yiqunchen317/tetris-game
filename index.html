@@ -543,7 +543,72 @@
   .hud-row{ font-size: 15px; }
   .hud-row b{ font-size: 20px; }
 }
+/* ===== History Modal ===== */
+.his-wrap{
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .his-top{
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .his-count{
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .his-list{
+    max-height: min(52vh, 420px);
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,.10);
+    background: rgba(255,255,255,.04);
+  }
+  .his-item{
+    width: 100%;
+    text-align: left;
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font-weight: 800;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .his-item:last-child{ border-bottom: 0; }
+  .his-item small{
+    display:block;
+    font-weight: 700;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .his-item:active{ transform: translateY(1px); }
+  .his-detail{
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,.10);
+    background: rgba(255,255,255,.04);
+    padding: 10px 12px;
+  }
+  .his-detail .row{ font-size: 14px; }
+  .his-actions{
+    display:flex;
+    gap: 10px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+  
+  @media (min-width: 680px){
+    .his-wrap{ grid-template-columns: 1fr 1fr; }
+    .his-list{ max-height: min(58vh, 520px); }
+  }
   </style>
+  
 </head>
 
 <body>
@@ -587,10 +652,12 @@
         <div class="btns">
           <button id="btnPause">Pause (P)</button>
           <button id="btnReset">Reset (R)</button>
+          <button id="btnNormal">普通模式 🙂</button>
           <button id="btnMercy">求饶模式 🥺</button>
           <button id="btnPro">大神模式 ⚡（慢慢变快）</button>
           <button id="btnNoob">菜鸡模式 🐣（悬空自动落）</button>
           <button id="btnEndless">无尽模式 ♾️（爽死你）</button>
+          <button id="btnHistory">历史记录 🗂️</button>
         </div>
         <p class="hint" style="margin-top:10px">
           键盘：← → 移动，↑ 旋转，↓ 软降，Space 硬降<br/>
@@ -679,7 +746,60 @@
     <div id="summaryBody" class="modal-desc" style="margin-bottom:12px"></div>
     <div class="modal-actions">
       <button id="summaryClose" class="modal-btn ghost">关闭</button>
+      <button id="summaryContinue" class="modal-btn ghost">继续游戏 ▶</button>
       <button id="summaryRestart" class="modal-btn">再来一局 ▶</button>
+    </div>
+  </div>
+</div>
+<!-- History modal -->
+<div id="historyModal" class="modal" aria-hidden="true">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="historyTitle">
+    <div class="modal-title" id="historyTitle">历史记录 🗂️</div>
+    <div class="modal-desc" style="margin-bottom:12px">每一把都会自动保存到本地（localStorage）。按时间排序，点一条可以查看详情。</div>
+
+    <div class="his-wrap">
+      <div>
+        <div class="his-top">
+          <div id="historyCount" class="his-count">0 条</div>
+          <button id="historyClear" class="modal-btn ghost">清空</button>
+        </div>
+        <div id="historyList" class="his-list" aria-label="history list"></div>
+      </div>
+
+      <div>
+        <div class="his-detail" aria-label="history detail">
+          <div id="historyDetail" class="modal-desc" style="margin:0">点左边一条记录查看。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="his-actions" style="margin-top:12px">
+      <button id="historyClose" class="modal-btn ghost">关闭</button>
+    </div>
+  </div>
+</div>
+<!-- Clear History Confirm modal -->
+<div id="clearHistoryModal" class="modal" aria-hidden="true">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="clearHistoryTitle">
+    <div class="modal-title" id="clearHistoryTitle">提示 😈</div>
+    <div class="modal-desc" id="clearHistoryDesc">你是不是玩不起</div>
+
+    <div class="modal-actions">
+      <button id="clearHistoryCancel" class="modal-btn ghost">我点错了</button>
+      <button id="clearHistoryOk" class="modal-btn">是的</button>
+    </div>
+  </div>
+</div>
+<!-- Mode Resume modal -->
+<div id="modeResumeModal" class="modal" aria-hidden="true">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modeResumeTitle">
+    <div class="modal-title" id="modeResumeTitle">模式进度</div>
+    <div id="modeResumeBody" class="modal-desc" style="margin-bottom:12px"></div>
+
+    <div class="modal-actions">
+      <button id="modeResumeCancel" class="modal-btn ghost">取消</button>
+      <button id="modeResumeRestart" class="modal-btn ghost">从第 1 关重新开始</button>
+      <button id="modeResumeContinue" class="modal-btn">继续当前等级 ▶</button>
     </div>
   </div>
 </div>
@@ -714,6 +834,7 @@ const hudStageEl = document.getElementById('hudStage');
   const btnPro = document.getElementById('btnPro');
   const btnNoob = document.getElementById('btnNoob');
   const btnEndless = document.getElementById('btnEndless');
+  const btnNormal = document.getElementById('btnNormal');
 
 const endlessModal = document.getElementById('endlessModal');
 const endlessDesc = document.getElementById('endlessDesc');
@@ -722,12 +843,20 @@ const endlessToPro = document.getElementById('endlessToPro');
 const summaryModal = document.getElementById('summaryModal');
 const summaryBody  = document.getElementById('summaryBody');
 const summaryClose = document.getElementById('summaryClose');
+const summaryContinue = document.getElementById('summaryContinue');
 const summaryRestart = document.getElementById('summaryRestart');
   const stageModal = document.getElementById('stageModal');
   const stageDesc = document.getElementById('stageDesc');
   const stageNext = document.getElementById('stageNext');
   document.getElementById('btnPause').onclick = () => togglePause();
-  document.getElementById('btnReset').onclick = () => { if(!started) startGame(); else reset(); };
+  document.getElementById('btnReset').onclick = () => {
+  if(!started) startGame();
+  else {
+    // ✅ 先把这一把存起来（只会存一次）
+    if(!gameOver) saveRunOnce();
+    reset();
+  }
+};
 
   // build cells once
   const cells = [];
@@ -778,6 +907,7 @@ const summaryRestart = document.getElementById('summaryRestart');
   let piece, nextKind;
   let score=0, lines=0, level=1;
   let paused=false, gameOver=false;
+  let gameOverPendingSave = false; // GAME OVER 弹总结，但还没写历史（给“继续游戏”留机会）
   // ===== Stats for summary =====
 let piecesLocked = 0;
 let hardDrops = 0;
@@ -834,7 +964,7 @@ function winStage(){
 
     stageTarget = stageTargetFor(stage);
     if(stageDesc) stageDesc.textContent = `第 ${stage} 关通关！目标 ${stageTarget} 分已达成。点击进入下一关。`;
-
+    saveRunOnce(); // ✅ C：通关也存一把
     openStageModal();
     draw();
   }, 280);
@@ -870,6 +1000,42 @@ function closeSummaryModal(){
   summaryModal.classList.remove('show');
   summaryModal.setAttribute('aria-hidden','true');
 }
+function continueAfterGameOver(){
+  if(!gameOver) return;
+
+  // 继续：不重开，不清分数/关卡/等级
+  gameOver = false;
+  gameOverPendingSave = false;
+  savedThisGame = false; // 允许后面正常存一次
+
+  paused = false;
+  stageCleared = false;
+  clearingAll = false;
+  clearing = false;
+  clearingRows = new Set();
+
+  overlayEl.classList.remove('show');
+  overlayEl.textContent = "";
+
+  closeSummaryModal();
+
+  // 为了能继续：清掉顶部 8 行，等于“撤回最后 8 个操作”，保证能生成新方块
+for(let y=0; y<8; y++){
+  for(let x=0; x<W; x++) board[y][x] = 0;
+}
+
+  // 尝试生成；如果还放不下就直接清空棋盘继续
+  spawn();
+  if(gameOver){
+    gameOver = false;
+    board = Array.from({length:H}, () => Array(W).fill(0));
+    bag = [];
+    nextKind = null;
+    spawn();
+  }
+
+  draw();
+}
 
 function fmtTime(ms){
   const s = Math.max(0, Math.floor(ms/1000));
@@ -886,7 +1052,381 @@ function modeLabel(){
   if(mercyOn) m.push('求饶');
   return m.length ? m.join(' / ') : '普通';
 }
+// ===== Per-mode progress (localStorage) =====
+const MODE_SAVE_KEY = 'tetris_mode_progress_v1';
 
+function modeKeyFromFlags(){
+  if(proMode) return 'pro';
+  if(noobMode) return 'noob';
+  if(endlessMode) return 'endless';
+  if(mercyOn) return 'mercy';
+  return 'normal';
+}
+
+function modeLabelFromKey(k){
+  if(k === 'pro') return '大神';
+  if(k === 'noob') return '菜鸡';
+  if(k === 'endless') return '无尽';
+  if(k === 'mercy') return '求饶';
+  return '普通';
+}
+
+function loadModeProgressAll(){
+  try{
+    const raw = localStorage.getItem(MODE_SAVE_KEY);
+    const obj = raw ? JSON.parse(raw) : {};
+    return (obj && typeof obj === 'object') ? obj : {};
+  }catch(e){
+    return {};
+  }
+}
+
+function saveModeProgressAll(all){
+  try{ localStorage.setItem(MODE_SAVE_KEY, JSON.stringify(all)); }catch(e){}
+}
+
+function saveCurrentModeProgress(){
+  const key = modeKeyFromFlags();
+  const all = loadModeProgressAll();
+
+  const cur = {
+    stage: stage ?? 1,
+    level: level ?? 1,
+    score: score ?? 0,
+    lines: lines ?? 0,
+    ts: Date.now(),
+  };
+
+  const prev = all[key];
+  if(!prev){
+    all[key] = cur;
+    saveModeProgressAll(all);
+    return;
+  }
+
+  const prevStage = prev.stage ?? 1;
+  const prevLevel = prev.level ?? 1;
+  const prevScore = prev.score ?? 0;
+  const prevLines = prev.lines ?? 0;
+
+  // 规则：
+  // 1) 关卡更高 -> 直接用当前记录
+  // 2) 同关卡但等级更高 -> 直接用当前记录
+  // 3) 同关同级 -> 分数/消行取更高（保持最高记录）
+  if(cur.stage > prevStage || (cur.stage === prevStage && cur.level > prevLevel)){
+    all[key] = cur;
+  }else if(cur.stage === prevStage && cur.level === prevLevel){
+    all[key] = {
+      stage: prevStage,
+      level: prevLevel,
+      score: Math.max(prevScore, cur.score),
+      lines: Math.max(prevLines, cur.lines),
+      ts: Date.now(),
+    };
+  } // 关卡/等级更低：忽略，不覆盖最高记录
+
+  saveModeProgressAll(all);
+}
+
+function fmtDateShort(ts){
+  try{ return new Date(ts).toLocaleString('zh-CN', { hour12:false }); }
+  catch(e){ return ''; }
+}
+
+// 只重置棋盘/袋子/当前块，不动 stage/level/score/lines
+function resetBoardOnly(){
+  board = Array.from({length:H}, () => Array(W).fill(0));
+
+  piecesLocked = 0;
+  hardDrops = 0;
+  softDrops = 0;
+  gameStartAt = Date.now();
+  savedThisGame = false;
+  resetModeTrail();
+
+  paused = false;
+  gameOver = false;
+  stageCleared = false;
+  clearingAll = false;
+  clearing = false;
+  clearingRows = new Set();
+
+  closeSummaryModal();
+  closeStageModal();
+  closeEndlessModal?.();
+
+  overlayEl.classList.remove('show');
+  overlayEl.textContent = "PAUSED";
+
+  bag = [];
+  nextKind = null;
+  updateHUD();
+  spawn();
+  draw();
+}
+
+// ===== Mode resume modal elements =====
+const modeResumeModal = document.getElementById('modeResumeModal');
+const modeResumeTitle = document.getElementById('modeResumeTitle');
+const modeResumeBody  = document.getElementById('modeResumeBody');
+const modeResumeCancel = document.getElementById('modeResumeCancel');
+const modeResumeRestart = document.getElementById('modeResumeRestart');
+const modeResumeContinue = document.getElementById('modeResumeContinue');
+
+let pendingModeKey = null;
+let pendingModeAction = null; // 'restart' | 'continue'
+let pendingModeSave = null;
+
+function openModeResumeModal(){
+  if(!modeResumeModal) return;
+  modeResumeModal.classList.add('show');
+  modeResumeModal.setAttribute('aria-hidden','false');
+}
+
+function closeModeResumeModal(){
+  if(!modeResumeModal) return;
+  modeResumeModal.classList.remove('show');
+  modeResumeModal.setAttribute('aria-hidden','true');
+}
+
+function setFlagsByModeKey(k){
+  // 先关所有模式（包括求饶）
+  turnOffAllModes();
+
+  if(k === 'pro'){
+    proMode = true;
+    if(btnPro) btnPro.textContent = '大神模式 ✅（慢慢变快）';
+  }else if(k === 'noob'){
+    noobMode = true;
+    if(btnNoob) btnNoob.textContent = '菜鸡模式 ✅（悬空自动落）';
+  }else if(k === 'endless'){
+    endlessMode = true;
+    endlessLocked = false;
+    if(btnEndless) btnEndless.textContent = '无尽模式 ✅（只出 O/I）';
+  }else if(k === 'normal'){
+    // 普通：全部关闭就行
+  }else if(k === 'mercy'){
+    // 求饶：不直接开，等玩家输暗号成功后 setMercy(true)
+  }
+
+  try{ pushModeTrail?.(); }catch(e){}
+}
+
+function applyModeWithRestart(k){
+  setFlagsByModeKey(k);
+  started = true;
+  startScreen?.classList.remove('show');
+  reset();
+}
+
+function applyModeWithContinue(k, save){
+  setFlagsByModeKey(k);
+
+  if(save){
+    stage = save.stage ?? 1;
+    level = save.level ?? 1;
+    score = save.score ?? 0;
+    lines = save.lines ?? 0;
+  }
+
+  started = true;
+  startScreen?.classList.remove('show');
+  resetBoardOnly();
+}
+
+function requestModeChange(k){
+  // 切模式前，把当前这把先存一下（避免丢进度）
+  if(started && !gameOver) saveRunOnce();
+
+  const all = loadModeProgressAll();
+  const save = all[k];
+
+  // 没存档：直接当“重开”
+  if(!save){
+    if(k === 'mercy'){
+      pendingModeKey = 'mercy';
+      pendingModeAction = 'restart';
+      pendingModeSave = null;
+      setFlagsByModeKey('mercy');
+      openMercy();
+      return;
+    }
+    applyModeWithRestart(k);
+    return;
+  }
+
+  // 有存档：弹窗让玩家选
+  pendingModeKey = k;
+  pendingModeSave = save;
+
+  if(modeResumeTitle) modeResumeTitle.textContent = `${modeLabelFromKey(k)} 模式进度`;
+  if(modeResumeBody){
+    modeResumeBody.innerHTML = `
+      <div class="summary">
+      <div class="row"><span>记录时间</span><b>${save.ts ? fmtDateShort(save.ts) : '-'}</b></div>
+<div class="row"><span>历史最高关卡</span><b>${save.stage ?? 1}</b></div>
+<div class="row"><span>历史最高等级</span><b>${save.level ?? 1}</b></div>
+<div class="row"><span>历史最高分</span><b>${save.score ?? 0}</b></div>
+<div class="row"><span>历史最高消行</span><b>${save.lines ?? 0}</b></div>
+<small>“继续”会从该模式【历史最高】进度继续；“重新开始”从第 1 关重新来。</small>  
+      </div>
+    `;
+  }
+
+  openModeResumeModal();
+}
+// ===== Mode trail (track mode switches within a run) =====
+let modeTrail = [];
+
+function resetModeTrail(){
+  // 本局起点：当前模式
+  modeTrail = [modeLabel()];
+}
+
+function pushModeTrail(){
+  const cur = modeLabel();
+  const last = modeTrail.length ? modeTrail[modeTrail.length - 1] : null;
+  if(cur && cur !== last) modeTrail.push(cur);
+}
+// ===== History (localStorage) =====
+const btnHistory = document.getElementById('btnHistory'); // 没有按钮也不影响（可选）
+const historyModal = document.getElementById('historyModal');
+const historyList = document.getElementById('historyList');
+const historyDetail = document.getElementById('historyDetail');
+const historyClose = document.getElementById('historyClose');
+const historyClear = document.getElementById('historyClear');
+const historyCount = document.getElementById('historyCount');
+const clearHistoryModal = document.getElementById('clearHistoryModal');
+const clearHistoryCancel = document.getElementById('clearHistoryCancel');
+const clearHistoryOk = document.getElementById('clearHistoryOk');
+
+const LS_KEY = 'tetris_runs_v1';
+let savedThisGame = false;
+let historyCache = [];
+
+function loadHistory(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    historyCache = Array.isArray(arr) ? arr : [];
+  }catch(e){
+    historyCache = [];
+  }
+  historyCache.sort((a,b) => (b.ts||0) - (a.ts||0)); // 最新在前
+}
+
+function saveHistory(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(historyCache)); }catch(e){}
+}
+
+function fmtDate(ts){
+  try{ return new Date(ts).toLocaleString('zh-CN', { hour12:false }); }
+  catch(e){ return String(ts); }
+}
+
+function snapshotRun(){
+  const dur = gameStartAt ? (Date.now() - gameStartAt) : 0;
+  return {
+    id: String(Date.now()) + '-' + Math.random().toString(16).slice(2),
+    ts: Date.now(),
+    score, lines, stage, level,
+    piecesLocked, hardDrops, softDrops,
+    durationMs: dur,
+    mode: modeLabel(),
+    modeTrail: Array.isArray(modeTrail) ? modeTrail.slice() : [modeLabel()],
+  };
+}
+
+function saveRunOnce(){
+  if(savedThisGame) return;
+  if(!Array.isArray(modeTrail) || modeTrail.length === 0) resetModeTrail();
+pushModeTrail();
+  savedThisGame = true;
+  loadHistory();
+  historyCache.unshift(snapshotRun());
+  if(historyCache.length > 200) historyCache.length = 200;
+  saveHistory();
+saveCurrentModeProgress();
+}
+
+function renderHistoryDetail(run){
+  if(!historyDetail) return;
+  if(!run){
+    historyDetail.innerHTML = '点左边一条记录查看。';
+    return;
+  }
+  historyDetail.innerHTML = `
+    <div class="summary">
+      <div class="row"><span>时间</span><b>${fmtDate(run.ts)}</b></div>
+      <div class="row"><span>得分</span><b>${run.score ?? 0}</b></div>
+      <div class="row"><span>消行</span><b>${run.lines ?? 0}</b></div>
+      <div class="row"><span>关卡</span><b>${run.stage ?? 1}</b></div>
+      <div class="row"><span>等级</span><b>${run.level ?? 1}</b></div>
+      <div class="row"><span>落块数</span><b>${run.piecesLocked ?? 0}</b></div>
+      <div class="row"><span>硬降次数</span><b>${run.hardDrops ?? 0}</b></div>
+      <div class="row"><span>软降次数</span><b>${run.softDrops ?? 0}</b></div>
+      <div class="row"><span>用时</span><b>${fmtTime(run.durationMs ?? 0)}</b></div>
+    <div class="row"><span>模式</span><b>${(Array.isArray(run.modeTrail) && run.modeTrail.length ? run.modeTrail.join(' → ') : (run.mode ?? '普通'))}</b></div>
+    </div>
+  `;
+}
+
+function renderHistoryList(){
+  if(!historyList) return;
+  if(historyCount) historyCount.textContent = `${historyCache.length} 条`;
+
+  if(historyCache.length === 0){
+    historyList.innerHTML = `<div class="modal-desc" style="padding:10px 12px; margin:0">暂无记录，先玩一把。</div>`;
+    renderHistoryDetail(null);
+    return;
+  }
+
+  historyList.innerHTML = historyCache.map((run) => {
+    return `
+      <button class="his-item" data-hid="${run.id}">
+        <div>
+          ${fmtDate(run.ts)}
+          <small>Score ${run.score ?? 0} · Lines ${run.lines ?? 0} · ${run.mode ?? '普通'}</small>
+        </div>
+        <div>›</div>
+      </button>
+    `;
+  }).join('');
+
+  renderHistoryDetail(historyCache[0]);
+
+  historyList.querySelectorAll('button[data-hid]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-hid');
+      const run = historyCache.find(r => r.id === id);
+      renderHistoryDetail(run);
+    });
+  });
+}
+
+function openHistoryModal(){
+  if(!historyModal) return;
+  loadHistory();
+  renderHistoryList();
+  historyModal.classList.add('show');
+  historyModal.setAttribute('aria-hidden','false');
+}
+
+function closeHistoryModal(){
+  if(!historyModal) return;
+  historyModal.classList.remove('show');
+  historyModal.setAttribute('aria-hidden','true');
+}
+function openClearHistoryModal(){
+  if(!clearHistoryModal) return;
+  clearHistoryModal.classList.add('show');
+  clearHistoryModal.setAttribute('aria-hidden','false');
+}
+function closeClearHistoryModal(){
+  if(!clearHistoryModal) return;
+  clearHistoryModal.classList.remove('show');
+  clearHistoryModal.setAttribute('aria-hidden','true');
+}
 function renderSummary(){
   if(!summaryBody) return;
   const dur = gameStartAt ? (Date.now() - gameStartAt) : 0;
@@ -908,8 +1448,27 @@ function renderSummary(){
 }
 
 // summary buttons
-summaryClose?.addEventListener('click', () => closeSummaryModal());
+summaryClose?.addEventListener('click', () => {
+  // 如果是 GAME OVER 触发的总结：此时才算一局结束，写入历史
+  if(gameOverPendingSave){
+    saveRunOnce();
+    gameOverPendingSave = false;
+  }
+  closeSummaryModal();
+});
+
+summaryContinue?.addEventListener('click', () => {
+  // 继续游戏：不写历史，不重开
+  continueAfterGameOver();
+});
+
 summaryRestart?.addEventListener('click', () => {
+  // 如果是 GAME OVER 触发的总结：此时才算一局结束，写入历史
+  if(gameOverPendingSave){
+    saveRunOnce();
+    gameOverPendingSave = false;
+  }
+
   closeSummaryModal();
   if(!started){
     startGame();
@@ -923,6 +1482,85 @@ summaryRestart?.addEventListener('click', () => {
 // 点击遮罩关闭
 summaryModal?.addEventListener('click', (e) => {
   if(e.target === summaryModal) closeSummaryModal();
+});
+btnHistory?.addEventListener('click', () => openHistoryModal());
+historyClose?.addEventListener('click', () => closeHistoryModal());
+historyModal?.addEventListener('click', (e) => {
+  if(e.target === historyModal) closeHistoryModal();
+});
+historyClear?.addEventListener('click', () => {
+  openClearHistoryModal();
+});
+clearHistoryCancel?.addEventListener('click', () => {
+  closeClearHistoryModal();
+});
+
+clearHistoryOk?.addEventListener('click', () => {
+  historyCache = [];
+  saveHistory();
+  renderHistoryList();
+  closeClearHistoryModal();
+});
+
+// 点遮罩关闭
+clearHistoryModal?.addEventListener('click', (e) => {
+  if(e.target === clearHistoryModal) closeClearHistoryModal();
+});
+// ===== Mode Resume modal events =====
+modeResumeCancel?.addEventListener('click', () => {
+  pendingModeKey = null;
+  pendingModeSave = null;
+  closeModeResumeModal();
+});
+
+modeResumeModal?.addEventListener('click', (e) => {
+  if(e.target === modeResumeModal){
+    pendingModeKey = null;
+    pendingModeSave = null;
+    closeModeResumeModal();
+  }
+});
+
+modeResumeRestart?.addEventListener('click', () => {
+  const k = pendingModeKey;
+  const save = pendingModeSave;
+  pendingModeKey = null;
+  pendingModeSave = null;
+  closeModeResumeModal();
+
+  if(!k) return;
+
+  if(k === 'mercy'){
+    pendingModeKey = 'mercy';
+    pendingModeAction = 'restart';
+    pendingModeSave = save;
+    setFlagsByModeKey('mercy');
+    openMercy();
+    return;
+  }
+
+  applyModeWithRestart(k);
+});
+
+modeResumeContinue?.addEventListener('click', () => {
+  const k = pendingModeKey;
+  const save = pendingModeSave;
+  pendingModeKey = null;
+  pendingModeSave = null;
+  closeModeResumeModal();
+
+  if(!k) return;
+
+  if(k === 'mercy'){
+    pendingModeKey = 'mercy';
+    pendingModeAction = 'continue';
+    pendingModeSave = save;
+    setFlagsByModeKey('mercy');
+    openMercy();
+    return;
+  }
+
+  applyModeWithContinue(k, save);
 });
 
 function checkEndlessCap(){
@@ -949,8 +1587,11 @@ function checkEndlessCap(){
       overlayEl.textContent = "GAME OVER (R)";
       overlayEl.classList.add('show');
       showToast("菜就多练");
-      setTimeout(() => {
-  if(gameOver) openSummaryModal();
+setTimeout(() => {
+  if(gameOver){
+    gameOverPendingSave = true;
+    openSummaryModal();
+  }
 }, 1350);
     }
   }
@@ -1152,6 +1793,9 @@ hardDrops = 0;
 softDrops = 0;
 gameStartAt = Date.now();
 closeSummaryModal();
+savedThisGame = false;
+resetModeTrail();
+gameOverPendingSave = false;
     paused=false; gameOver=false;
     stageCleared = false;
   clearingAll = false;
@@ -1216,7 +1860,12 @@ const interval = baseInterval * mercyMultiplier;
 }
   function handleControl(code){
     if(code === 'KeyP'){ togglePause(); return; }
-    if(code === 'KeyR'){ reset(); return; }
+    if(code === 'KeyR'){
+  // 键盘 R 重开也算一局结束，先存一次
+  if(started && !gameOver) saveRunOnce();
+  reset();
+  return;
+}
     if(code === 'KeyQ'){ return; }
     if(!started || paused || gameOver || stageCleared) return;
 
@@ -1345,37 +1994,19 @@ function turnOffAllModes(){
   if(btnNoob) btnNoob.textContent = '菜鸡模式 🐣（悬空自动落）';
   if(btnEndless) btnEndless.textContent = '无尽模式 ♾️（爽死你）';
 }
+btnNormal?.addEventListener('click', () => {
+  requestModeChange('normal');
+});
 btnPro?.addEventListener('click', () => {
-  const next = !proMode;   // 记录：你是不是想开它
-  turnOffAllModes();       // ✅ 先关掉其他模式
-  if(next){
-    proMode = true;
-    if(btnPro) btnPro.textContent = '大神模式 ✅（慢慢变快）';
-  }
+  requestModeChange('pro');
 });
 
 btnNoob?.addEventListener('click', () => {
-  const next = !noobMode;
-  turnOffAllModes();
-  if(next){
-    noobMode = true;
-    if(btnNoob) btnNoob.textContent = '菜鸡模式 ✅（悬空自动落）';
-  }
+  requestModeChange('noob');
 });
 
 btnEndless?.addEventListener('click', () => {
-  const next = !endlessMode;
-  turnOffAllModes();
-  if(next){
-    endlessMode = true;
-    endlessLocked = false;
-    if(btnEndless) btnEndless.textContent = '无尽模式 ✅（只出 O/I）';
-  }
-
-  // 开/关无尽都重开一局更清爽
-  started = true;
-  startScreen?.classList.remove('show');
-  reset();
+  requestModeChange('endless');
 });
 
 endlessContinue?.addEventListener('click', () => {
@@ -1400,6 +2031,7 @@ endlessToPro?.addEventListener('click', () => {
   stageCleared = false;
   clearingAll = false;
   reset();
+  pushModeTrail();
 });
 stageNext?.addEventListener('click', () => {
   closeStageModal();
@@ -1447,28 +2079,42 @@ stageNext?.addEventListener('click', () => {
     mercyOn = on;
     mercyMultiplier = on ? 3.5 : 1;
     btnMercy.textContent = on ? '求饶中 ✅（点取消）' : '求饶模式 🥺';
+    pushModeTrail();
   }
-
   function tryEnableMercy(){
-    const txt = (mercyInput.value || '').trim();
-    if(txt === '我是菜鸡'){
-      setMercy(true);
-      mercyTip.textContent = '已开启！速度已变慢 ✅';
-      mercyTip.className = 'modal-tip good';
-      setTimeout(closeMercy, 450);
-    }else{
-      mercyTip.textContent = '不对哦…提示：我是菜鸡';
-      mercyTip.className = 'modal-tip bad';
+  const txt = (mercyInput.value || '').trim();
+
+  if(txt === '我是菜鸡'){
+    setMercy(true);
+
+    // 如果是从“模式继续/重开”流程进来的：按用户选择执行
+    if(pendingModeKey === 'mercy' && (pendingModeAction === 'restart' || pendingModeAction === 'continue')){
+      const act = pendingModeAction;
+      const save = pendingModeSave;
+
+      pendingModeKey = null;
+      pendingModeAction = null;
+      pendingModeSave = null;
+
+      if(act === 'continue') applyModeWithContinue('mercy', save);
+      else applyModeWithRestart('mercy');
     }
+
+    mercyTip.textContent = '已开启！速度已变慢 ✅';
+    mercyTip.className = 'modal-tip good';
+    setTimeout(closeMercy, 450);
+  }else{
+    mercyTip.textContent = '不对哦…提示：我是菜鸡';
+    mercyTip.className = 'modal-tip bad';
   }
+}
 
   btnMercy.addEventListener('click', () => {
   if(mercyOn){
     setMercy(false);
     return;
   }
-  turnOffAllModes(); // ✅ 开求饶前先关掉其他模式
-  openMercy();
+  requestModeChange('mercy');
 });
 
   mercyCancel.addEventListener('click', closeMercy);
@@ -1514,6 +2160,14 @@ tick = function(t){
 // 初始：不自动 reset，不开始下落
 startScreen?.classList.add('show');
 requestAnimationFrame(tick);
+
+// ✅ 启动时先读一次历史（下面会教你加 loadHistory）
+loadHistory();
+
+// ✅ B：退出/刷新也保存（只保存一次）
+window.addEventListener('beforeunload', () => {
+  if(started && !gameOver) saveRunOnce();
+});
 
 // 启动完成后隐藏 splash
 requestAnimationFrame(() => hideSplash());
