@@ -10,9 +10,7 @@
   <style>
     html, body{
   overscroll-behavior: none;
-  background-color: #0b0f17; /* 首帧兜底 */
-  background: radial-gradient(1200px 600px at 50% 0%, rgba(21,32,69,.65) 0%, var(--bg2) 55%),
-              linear-gradient(180deg, var(--bg1), var(--bg2));
+  background-color: #0b0f17; /* 防止首帧黑闪 */
 }
     :root{
       --cell: 28px;
@@ -24,9 +22,6 @@
       --text: #e5e7eb;
       --muted:#94a3b8;
       --shadow: rgba(0,0,0,.4);
-      --hue: 220;
-      --bg1: hsl(var(--hue) 55% 16%);
-      --bg2: hsl(calc(var(--hue) + 25) 60% 10%);
     }
     *{box-sizing:border-box}
     /* ===== Splash (Launch Screen) ===== */
@@ -37,7 +32,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
+  background: radial-gradient(1200px 600px at 50% 0%, #152045 0%, var(--bg) 55%);
   transition: opacity .28s ease, transform .28s ease;
 }
 .splash.hide{
@@ -98,60 +93,6 @@
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
     }
-    /* ===== Dynamic Starfield / Glow (stable) ===== */
-.bgfx{
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
-}
-
-.bgfx::before{
-  content:"";
-  position: absolute;
-  inset: -20vh -20vw;
-  opacity: .65;
-  background-image:
-    radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,.55) 0 1px, transparent 2px),
-    radial-gradient(1px 1px at 70% 20%, rgba(255,255,255,.35) 0 1px, transparent 2px),
-    radial-gradient(1px 1px at 40% 80%, rgba(255,255,255,.45) 0 1px, transparent 2px),
-    radial-gradient(1px 1px at 85% 70%, rgba(255,255,255,.30) 0 1px, transparent 2px),
-    radial-gradient(1px 1px at 10% 65%, rgba(255,255,255,.35) 0 1px, transparent 2px);
-  background-size: 320px 320px;
-  filter: drop-shadow(0 0 6px rgba(255,255,255,.08));
-  animation: starsDrift 18s linear infinite;
-  will-change: transform;
-}
-
-.bgfx::after{
-  content:"";
-  position: absolute;
-  inset: -10vh -10vw;
-  opacity: .85;
-  background:
-    radial-gradient(900px 520px at 20% 10%, hsla(var(--hue) 80% 60% / .16), transparent 60%),
-    radial-gradient(860px 520px at 85% 25%, hsla(calc(var(--hue) + 40) 85% 60% / .14), transparent 62%),
-    radial-gradient(980px 640px at 50% 95%, hsla(calc(var(--hue) + 15) 85% 55% / .12), transparent 60%);
-  animation: glowPulse 6.5s ease-in-out infinite;
-  will-change: opacity, transform;
-  mix-blend-mode: screen;
-}
-
-@keyframes starsDrift{
-  from{ transform: translate3d(0,0,0); }
-  to{ transform: translate3d(-8vw, -14vh, 0); }
-}
-@keyframes glowPulse{
-  0%,100%{ opacity: .65; transform: translate3d(0,0,0) scale(1); }
-  50%{ opacity: .95; transform: translate3d(0,-1vh,0) scale(1.02); }
-}
-
-@media (prefers-reduced-motion: reduce){
-  .bgfx::before, .bgfx::after{ animation: none !important; }
-}
-    
-
     .wrap{
       display:grid;
       grid-template-columns: auto 260px;
@@ -163,8 +104,6 @@
       box-shadow: 0 18px 40px var(--shadow);
       backdrop-filter: blur(10px);
       margin-bottom: 0;
-      position: relative;
-z-index: 1;
     }
     .board{
       position:relative;
@@ -608,7 +547,6 @@ z-index: 1;
 </head>
 
 <body>
-  <div class="bgfx" aria-hidden="true"></div>
   <!-- Splash / Launch Screen -->
 <div id="splash" class="splash">
   <div class="splash-card">
@@ -1165,8 +1103,6 @@ function updateHUD(){
   if(hudLevelEl) hudLevelEl.textContent = level;
   if(hudLinesEl) hudLinesEl.textContent = lines;
   if(hudStageEl) hudStageEl.textContent = stage;
-  const hue = 210 + Math.min(140, Math.floor(score / 40));
-  document.documentElement.style.setProperty('--hue', String(hue));
 }
 
   function draw(){
