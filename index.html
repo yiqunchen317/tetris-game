@@ -23,6 +23,8 @@
       --muted:#94a3b8;
       --shadow: rgba(0,0,0,.4);
       --accent-rgb: 34,211,238; /* 默认普通模式主题色 */
+      --clear-dur: .28s;
+  --energy-stagger: 46ms;
     }
     *{box-sizing:border-box}
     /* ===== Splash (Launch Screen) ===== */
@@ -33,7 +35,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(1200px 600px at 50% 0%, #152045 0%, var(--bg) 55%);
+  background:
+    /* very soft, translucent blue air from the top */
+    radial-gradient(
+      1400px 700px at 50% -15%,
+      rgba(150,195,255,.26),
+      rgba(150,195,255,.12) 28%,
+      rgba(150,195,255,.04) 45%,
+      rgba(150,195,255,0) 70%
+    ),
+
+    /* clearer vertical fade, lighter overall */
+    linear-gradient(
+      180deg,
+      rgba(18,34,64,.78) 0%,
+      rgba(12,22,42,.84) 45%,
+      rgba(8,14,28,.92) 100%
+    );
   transition: opacity .28s ease, transform .28s ease;
 }
 .splash.hide{
@@ -87,7 +105,23 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      background: radial-gradient(1200px 600px at 50% 0%, #152045 0%, var(--bg) 55%);
+      background:
+        /* very soft, translucent blue air from the top */
+        radial-gradient(
+          1400px 700px at 50% -15%,
+          rgba(150,195,255,.26),
+          rgba(150,195,255,.12) 28%,
+          rgba(150,195,255,.04) 45%,
+          rgba(150,195,255,0) 70%
+        ),
+
+        /* clearer vertical fade, lighter overall */
+        linear-gradient(
+          180deg,
+          rgba(18,34,64,.78) 0%,
+          rgba(12,22,42,.84) 45%,
+          rgba(8,14,28,.92) 100%
+        );
       color:var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", Arial;
       padding-bottom: calc(var(--mctl-pad, 0px) + env(safe-area-inset-bottom));
@@ -126,7 +160,7 @@
       grid-template-columns: auto 260px;
       gap:16px;
       padding:18px;
-      background: rgba(16,24,39,.55);
+      background: rgba(16,24,39,.60);
       border:1px solid rgba(255,255,255,.08);
       border-radius:16px;
       box-shadow: 0 18px 40px var(--shadow);
@@ -193,7 +227,9 @@
       width:var(--cell); height:var(--cell);
       background: rgba(15, 23, 42, .55);
       border:1px solid rgba(255,255,255,.045);
-border-radius:5px;
+      border-radius:5px;
+      position: relative;
+      overflow: hidden;
     }
     .cell.filled{
       border:none;
@@ -202,46 +238,335 @@ border-radius:5px;
     }
     /* ===== Piece color themes (subtle neon + glass) ===== */
 .cell.filled.kind-I{
-  background: linear-gradient(135deg, rgba(34,211,238,.60), rgba(34,211,238,.18));
+  background:
+    /* top highlight */
+    linear-gradient(180deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 38%),
+    /* bottom corner shade */
+    radial-gradient(120% 100% at 50% 115%, rgba(0,0,0,.26) 0%, rgba(0,0,0,0) 60%),
+    /* main color */
+    linear-gradient(135deg, rgba(34,211,238,.62), rgba(34,211,238,.16));
   box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.16),
+    inset 0 1px 0 rgba(255,255,255,.18),
+    inset 0 -10px 16px rgba(0,0,0,.22),
+    inset 0 0 0 1px rgba(255,255,255,.14),
     0 0 12px rgba(34,211,238,.18);
 }
+
 .cell.filled.kind-O{
-  background: linear-gradient(135deg, rgba(250,204,21,.62), rgba(250,204,21,.18));
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 38%),
+    radial-gradient(120% 100% at 50% 115%, rgba(0,0,0,.26) 0%, rgba(0,0,0,0) 60%),
+    linear-gradient(135deg, rgba(250,204,21,.64), rgba(250,204,21,.16));
   box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.16),
+    inset 0 1px 0 rgba(255,255,255,.18),
+    inset 0 -10px 16px rgba(0,0,0,.22),
+    inset 0 0 0 1px rgba(255,255,255,.14),
     0 0 12px rgba(250,204,21,.16);
 }
+
 .cell.filled.kind-T{
-  background: linear-gradient(135deg, rgba(168,85,247,.62), rgba(168,85,247,.18));
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 38%),
+    radial-gradient(120% 100% at 50% 115%, rgba(0,0,0,.26) 0%, rgba(0,0,0,0) 60%),
+    linear-gradient(135deg, rgba(168,85,247,.64), rgba(168,85,247,.16));
   box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.16),
+    inset 0 1px 0 rgba(255,255,255,.18),
+    inset 0 -10px 16px rgba(0,0,0,.22),
+    inset 0 0 0 1px rgba(255,255,255,.14),
     0 0 12px rgba(168,85,247,.16);
 }
+
 .cell.filled.kind-S{
-  background: linear-gradient(135deg, rgba(34,197,94,.60), rgba(34,197,94,.18));
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 38%),
+    radial-gradient(120% 100% at 50% 115%, rgba(0,0,0,.26) 0%, rgba(0,0,0,0) 60%),
+    linear-gradient(135deg, rgba(34,197,94,.62), rgba(34,197,94,.16));
   box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.16),
+    inset 0 1px 0 rgba(255,255,255,.18),
+    inset 0 -10px 16px rgba(0,0,0,.22),
+    inset 0 0 0 1px rgba(255,255,255,.14),
     0 0 12px rgba(34,197,94,.14);
 }
+
 .cell.filled.kind-Z{
-  background: linear-gradient(135deg, rgba(239,68,68,.62), rgba(239,68,68,.18));
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 38%),
+    radial-gradient(120% 100% at 50% 115%, rgba(0,0,0,.26) 0%, rgba(0,0,0,0) 60%),
+    linear-gradient(135deg, rgba(239,68,68,.64), rgba(239,68,68,.16));
   box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.16),
+    inset 0 1px 0 rgba(255,255,255,.18),
+    inset 0 -10px 16px rgba(0,0,0,.22),
+    inset 0 0 0 1px rgba(255,255,255,.14),
     0 0 12px rgba(239,68,68,.14);
 }
+
 .cell.filled.kind-J{
-  background: linear-gradient(135deg, rgba(59,130,246,.62), rgba(59,130,246,.18));
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 38%),
+    radial-gradient(120% 100% at 50% 115%, rgba(0,0,0,.26) 0%, rgba(0,0,0,0) 60%),
+    linear-gradient(135deg, rgba(59,130,246,.64), rgba(59,130,246,.16));
   box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.16),
+    inset 0 1px 0 rgba(255,255,255,.18),
+    inset 0 -10px 16px rgba(0,0,0,.22),
+    inset 0 0 0 1px rgba(255,255,255,.14),
     0 0 12px rgba(59,130,246,.14);
 }
+
 .cell.filled.kind-L{
-  background: linear-gradient(135deg, rgba(249,115,22,.62), rgba(249,115,22,.18));
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 38%),
+    radial-gradient(120% 100% at 50% 115%, rgba(0,0,0,.26) 0%, rgba(0,0,0,0) 60%),
+    linear-gradient(135deg, rgba(249,115,22,.64), rgba(249,115,22,.16));
   box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.16),
+    inset 0 1px 0 rgba(255,255,255,.18),
+    inset 0 -10px 16px rgba(0,0,0,.22),
+    inset 0 0 0 1px rgba(255,255,255,.14),
     0 0 12px rgba(249,115,22,.14);
+}
+
+/* ===== Glass block (visual-only) ===== */
+
+.cell.filled.kind-G{
+  background:
+    /* top glass highlight */
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.38) 0%,
+      rgba(255,255,255,.18) 28%,
+      rgba(255,255,255,0) 55%
+    ),
+    /* inner glow */
+    radial-gradient(
+      120% 120% at 30% 20%,
+      rgba(180,220,255,.45),
+      rgba(120,180,255,.18) 40%,
+      rgba(120,180,255,0) 65%
+    ),
+    /* base glass tint */
+    linear-gradient(
+      135deg,
+      rgba(120,190,255,.35),
+      rgba(120,190,255,.12)
+    );
+  border: 1px solid rgba(180,220,255,.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.45),
+    inset 0 -12px 22px rgba(0,0,0,.18),
+    inset 0 0 0 1px rgba(255,255,255,.22),
+    0 0 16px rgba(140,200,255,.22);
+}
+
+/* ===== Energy block (E) ===== */
+.cell.filled.kind-E{
+  position: relative;
+  background:
+    /* moving-ish highlight feel (static but looks energetic) */
+    radial-gradient(120% 120% at 30% 18%, rgba(255,255,255,.28), rgba(255,255,255,0) 58%),
+    radial-gradient(140% 140% at 70% 30%, rgba(168,85,247,.42), rgba(168,85,247,0) 60%),
+    linear-gradient(135deg, rgba(59,130,246,.70), rgba(168,85,247,.18));
+  border: 1px solid rgba(170,140,255,.58);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.22),
+    inset 0 -12px 22px rgba(0,0,0,.22),
+    0 0 18px rgba(168,85,247,.22);
+  animation: energyPulse 1.05s ease-in-out infinite;
+}
+
+.cell.filled.kind-E::after{
+  content: "⚡";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  font-weight: 900;
+  color: rgba(255,255,255,.78);
+  text-shadow:
+    0 0 10px rgba(168,85,247,.35),
+    0 10px 18px rgba(0,0,0,.35);
+  opacity: .85;
+  pointer-events: none;
+}
+
+@keyframes energyPulse{
+  0%,100%{ filter: brightness(1.02) saturate(1.05); transform: translateZ(0); }
+  50%    { filter: brightness(1.18) saturate(1.20); transform: translateZ(0); }
+}
+
+/* ===== Bomb / Pulse block (B) ===== */
+.cell.filled.kind-B{
+  position: relative;
+  background:
+    radial-gradient(120% 120% at 30% 18%, rgba(255,255,255,.22), rgba(255,255,255,0) 58%),
+    radial-gradient(140% 140% at 70% 30%, rgba(248,113,113,.42), rgba(248,113,113,0) 62%),
+    linear-gradient(135deg, rgba(239,68,68,.72), rgba(244,63,94,.18));
+  border: 1px solid rgba(255,255,255,.10);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.18),
+    inset 0 -12px 22px rgba(0,0,0,.24),
+    0 0 18px rgba(239,68,68,.16);
+  animation: bombBreath 1.15s ease-in-out infinite;
+}
+
+.cell.filled.kind-B::after{
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+  background: rgba(255,255,255,.88);
+  box-shadow:
+    0 0 10px rgba(255,255,255,.28),
+    0 0 18px rgba(239,68,68,.22);
+  opacity: .90;
+  pointer-events: none;
+}
+
+@keyframes bombBreath{
+  0%,100%{ filter: brightness(1.02) saturate(1.05); transform: translateZ(0) scale(1); }
+  50%    { filter: brightness(1.18) saturate(1.15); transform: translateZ(0) scale(1.04); }
+}
+
+/* Bomb blast ring (separate effect from line clear) */
+  .bomb-blast{
+    position: absolute;
+    width: calc(var(--cell) * 2.6);
+    height: calc(var(--cell) * 2.6);
+    border-radius: 999px;
+    left: var(--bx);
+    top: var(--by);
+    transform: translate(-50%, -50%) scale(.35);
+    pointer-events: none;
+    z-index: 6;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(255,255,255,.18) 0%, rgba(255,255,255,0) 45%),
+      radial-gradient(circle at 50% 50%, rgba(239,68,68,.28) 0%, rgba(239,68,68,0) 60%);
+    box-shadow: 0 0 30px rgba(239,68,68,.18);
+    animation: bombBlast 1.25s ease-out forwards;
+    mix-blend-mode: screen;
+  }
+
+@keyframes bombBlast{
+  0%   { opacity: 0;   transform: translate(-50%, -50%) scale(.20); filter: blur(2px); }
+  25%  { opacity: .9; transform: translate(-50%, -50%) scale(.55); filter: blur(0px); }
+  60%  { opacity: .6; transform: translate(-50%, -50%) scale(.95); filter: blur(1px); }
+  100% { opacity: 0;  transform: translate(-50%, -50%) scale(1.35); filter: blur(3px); }
+}
+
+    /* ===== Ice block (C) ===== */
+.cell.filled.kind-C{
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.26) 0%, rgba(255,255,255,0) 40%),
+    radial-gradient(120% 120% at 30% 18%, rgba(255,255,255,.22), rgba(255,255,255,0) 58%),
+    linear-gradient(135deg, rgba(56,189,248,.60), rgba(14,165,233,.16));
+  border: 1px solid rgba(180,230,255,.40);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.22),
+    inset 0 -14px 22px rgba(0,0,0,.22),
+    0 0 16px rgba(56,189,248,.14);
+}
+/* crack texture */
+.cell.filled.kind-C::after{
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: 4px;
+  opacity: .55;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(55deg,
+      rgba(255,255,255,0) 0px,
+      rgba(255,255,255,0) 6px,
+      rgba(255,255,255,.22) 7px,
+      rgba(255,255,255,0) 9px),
+    repeating-linear-gradient(125deg,
+      rgba(255,255,255,0) 0px,
+      rgba(255,255,255,0) 8px,
+      rgba(255,255,255,.18) 9px,
+      rgba(255,255,255,0) 11px);
+  mix-blend-mode: overlay;
+}
+/* snowflake marker */
+.cell.filled.kind-C::before{
+  content: "❄";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  font-weight: 900;
+  color: rgba(255,255,255,.74);
+  text-shadow:
+    0 0 10px rgba(56,189,248,.24),
+    0 10px 18px rgba(0,0,0,.32);
+  opacity: .70;
+  pointer-events: none;
+}
+    /* ===== Metal block (M) ===== */
+/* Dark metal (first life) */
+.cell.filled.kind-M{
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.20) 0%, rgba(255,255,255,0) 40%),
+    radial-gradient(140% 120% at 30% 18%, rgba(255,255,255,.12), rgba(255,255,255,0) 58%),
+    linear-gradient(135deg, rgba(180,190,205,.55), rgba(85,95,110,.22));
+  border: 1px solid rgba(255,255,255,.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.22),
+    inset 0 -16px 24px rgba(0,0,0,.28),
+    inset 0 0 0 1px rgba(255,255,255,.10),
+    0 0 10px rgba(180,190,205,.10);
+}
+
+/* Hex-nut marker for dark metal */
+.cell.filled.kind-M::after{
+  content: "⬡";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  font-weight: 900;
+  color: rgba(230,235,245,.55);
+  text-shadow:
+    0 0 6px rgba(255,255,255,.18),
+    0 6px 12px rgba(0,0,0,.45);
+  opacity: .75;
+  pointer-events: none;
+}
+
+/* Light metal (second life) */
+.cell.filled.kind-R{
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.32) 0%, rgba(255,255,255,0) 40%),
+    radial-gradient(140% 120% at 30% 18%, rgba(255,255,255,.22), rgba(255,255,255,0) 60%),
+    linear-gradient(135deg, rgba(210,218,230,.62), rgba(120,130,145,.22));
+  border: 1px solid rgba(255,255,255,.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.28),
+    inset 0 -14px 22px rgba(0,0,0,.24),
+    inset 0 0 0 1px rgba(255,255,255,.14),
+    0 0 12px rgba(210,218,230,.12);
+}
+
+/* Hex-nut marker for light metal */
+.cell.filled.kind-R::after{
+  content: "⬡";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  font-weight: 900;
+  color: rgba(255,255,255,.85);
+  text-shadow:
+    0 0 10px rgba(255,255,255,.35),
+    0 6px 14px rgba(0,0,0,.35);
+  opacity: .9;
+  pointer-events: none;
 }
 
 /* Keep ghost readable over colors */
@@ -259,6 +584,7 @@ border-radius:5px;
 .cell.ghost.kind-Z{ border-color: rgba(239,68,68,.30); box-shadow: inset 0 0 0 2px rgba(239,68,68,.26), 0 0 10px rgba(239,68,68,.06); }
 .cell.ghost.kind-J{ border-color: rgba(59,130,246,.30); box-shadow: inset 0 0 0 2px rgba(59,130,246,.26), 0 0 10px rgba(59,130,246,.06); }
 .cell.ghost.kind-L{ border-color: rgba(249,115,22,.30); box-shadow: inset 0 0 0 2px rgba(249,115,22,.26), 0 0 10px rgba(249,115,22,.06); }
+.cell.ghost.kind-E{ border-color: rgba(168,85,247,.34); box-shadow: inset 0 0 0 2px rgba(168,85,247,.26), 0 0 10px rgba(168,85,247,.08); }
     .cell.next{
   border:none;
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.10);
@@ -274,6 +600,7 @@ border-radius:5px;
     .cell.next.kind-Z{ background: linear-gradient(135deg, rgba(239,68,68,.20), rgba(239,68,68,.06)); }
     .cell.next.kind-J{ background: linear-gradient(135deg, rgba(59,130,246,.20), rgba(59,130,246,.06)); }
     .cell.next.kind-L{ background: linear-gradient(135deg, rgba(249,115,22,.20), rgba(249,115,22,.06)); }
+    .cell.next.kind-E{ background: linear-gradient(135deg, rgba(168,85,247,.22), rgba(168,85,247,.06)); }
 
     .side{
       display:flex;
@@ -532,6 +859,48 @@ border-radius:5px;
         inset 0 1px 0 rgba(255,255,255,.14),
         inset 0 -12px 22px rgba(0,0,0,.26);
       letter-spacing: .9px;
+    }
+
+    /* ===== Game-style colored controls (ONLY color, no layout change) ===== */
+
+    /* 左移 */
+    .mbtn[data-act="left"]{
+      background:
+        radial-gradient(140% 120% at 30% 18%, rgba(59,130,246,.45), rgba(59,130,246,0) 60%),
+        linear-gradient(180deg, rgba(59,130,246,.35), rgba(37,99,235,.18));
+      border-color: rgba(59,130,246,.55);
+    }
+
+    /* 右移 */
+    .mbtn[data-act="right"]{
+      background:
+        radial-gradient(140% 120% at 30% 18%, rgba(96,165,250,.45), rgba(96,165,250,0) 60%),
+        linear-gradient(180deg, rgba(96,165,250,.35), rgba(37,99,235,.18));
+      border-color: rgba(96,165,250,.55);
+    }
+
+    /* 软降 */
+    .mbtn[data-act="down"]{
+      background:
+        radial-gradient(140% 120% at 30% 18%, rgba(34,197,94,.45), rgba(34,197,94,0) 60%),
+        linear-gradient(180deg, rgba(34,197,94,.35), rgba(22,163,74,.18));
+      border-color: rgba(34,197,94,.55);
+    }
+
+    /* 旋转 */
+    .mbtn[data-act="rotate"]{
+      background:
+        radial-gradient(140% 120% at 30% 18%, rgba(168,85,247,.45), rgba(168,85,247,0) 60%),
+        linear-gradient(180deg, rgba(168,85,247,.35), rgba(126,34,206,.18));
+      border-color: rgba(168,85,247,.55);
+    }
+
+    /* 硬降 / DROP（主按钮） */
+    .mbtn[data-act="drop"]{
+      background:
+        radial-gradient(140% 120% at 30% 18%, rgba(250,204,21,.55), rgba(250,204,21,0) 60%),
+        linear-gradient(180deg, rgba(250,204,21,.38), rgba(202,138,4,.22));
+      border-color: rgba(250,204,21,.65);
     }
 
     .mbtn[data-act="drop"]:active{
@@ -824,10 +1193,12 @@ max-width: 560px;
   z-index: 15000; /* 比弹窗低也行，但要比游戏高 */
 }
 /* Toast color themes */
+
 .toast.combo{ color: rgba(34,211,238,.98); }
 .toast.b2b{ color: rgba(168,85,247,.98); }
 .toast.pc{ color: rgba(250,204,21,.98); }
 .toast.tetris{ color: rgba(255,255,255,.98); }
+.toast.metal{ color: rgba(220,228,240,.98); }
 
 .toast.show{
   animation: toastFlash 1.2s ease-out forwards;
@@ -896,11 +1267,11 @@ max-width: 560px;
 
 @keyframes particleFly{
   from{
-    transform: translate(0,0) scale(1);
+    transform: translate(0,0) rotate(var(--rot, 0deg)) scale(1);
     opacity: 1;
   }
   to{
-    transform: translate(var(--dx), var(--dy)) scale(.2);
+    transform: translate(var(--dx), var(--dy)) rotate(var(--rot, 0deg)) scale(.2);
     opacity: 0;
   }
 }
@@ -911,8 +1282,25 @@ max-width: 560px;
 .cell.clearing.clear-3{ filter: brightness(2.15); }
 .cell.clearing.clear-4{ filter: brightness(2.35); }
 .cell.clearing{
-  animation: shatter .28s cubic-bezier(.2,.8,.2,1) forwards;
+  animation: shatter var(--clear-dur, .28s) cubic-bezier(.2,.8,.2,1) forwards;
   transform-origin: center;
+  animation-delay: var(--ad, 0ms);
+}
+/* ===== Glass-only clear effect (visual-only) ===== */
+.cell.clearing.kind-G{
+  animation: glassShatter var(--clear-dur, .34s) cubic-bezier(.2,.8,.2,1) forwards;
+  filter: brightness(1.25) saturate(1.15);
+  animation-delay: var(--ad, 0ms);
+}
+/* ===== Energy clear: shatter order ===== */
+.cell.clearing.energy-first{ --ad: 0ms; }
+.cell.clearing.energy-late{  --ad: var(--energy-stagger, 46ms); }
+
+@keyframes glassShatter{
+  0%   { transform: scale(1);    opacity: 1;   filter: brightness(1.05) saturate(1.1); }
+  18%  { transform: scale(1.28); opacity: 1;   filter: brightness(1.65) saturate(1.25); }
+  55%  { transform: scale(.92);  opacity: .55; filter: brightness(1.35) saturate(1.2); }
+  100% { transform: scale(.50);  opacity: 0;   filter: brightness(1.10) saturate(1.1); }
 }
 
 @keyframes shatter{
@@ -1297,8 +1685,13 @@ const summaryRestart = document.getElementById('summaryRestart');
     Z: [[1,1,0,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]],
     J: [[1,0,0,0],[1,1,1,0],[0,0,0,0],[0,0,0,0]],
     L: [[0,0,1,0],[1,1,1,0],[0,0,0,0],[0,0,0,0]],
+    G: [[0,1,1,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]],
+    E: [[0,1,1,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]],
+    M: [[0,1,1,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]],
+    B: [[0,1,1,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]],
+    C: [[0,1,1,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]],
   };
-  const ORDER = ["I","O","T","S","Z","J","L"];
+  const ORDER = ["I","O","T","S","Z","J","L","G","E","M","B","C"];
 
   const rotCW = m => m[0].map((_,i) => m.map(r=>r[i]).reverse());
   const cellsOf = m => {
@@ -1322,7 +1715,20 @@ const summaryRestart = document.getElementById('summaryRestart');
   // 7-bag random
   let bag = [];
   const refillBag = () => {
-  const pool = endlessMode ? ["I","O"] : ORDER.slice();
+    let pool;
+
+if(endlessMode){
+  pool = [
+    'I','O','I','O','I','O','I','O',
+    'I','O','I','O',
+    'G','E',
+    'M',
+    'B','B',
+    'C'
+  ];
+}else{
+  pool = ORDER.slice().concat(['C']); // extra C so you can actually see it
+}
   // Fisher–Yates shuffle
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -1365,6 +1771,10 @@ let mercyMultiplier = 1; // 1=正常，>1 越大越慢
 let clearing = false;
 let clearingRows = new Set(); // 记录正在消除的行
 let clearingCount = 0; // 本次消了几行（1-4），用于清行闪光强度
+// ===== Energy slow-mo =====
+let slowMoUntil = 0;
+let slowMoFactor = 1;
+let energyClearActive = false;
 // ===== Step 9: 主题色 + 当前模式按钮高亮 =====
 function setAccent(rgb){
   document.documentElement.style.setProperty('--accent-rgb', rgb);
@@ -2168,6 +2578,12 @@ function kindToRgb(k){
   if(k === 'Z') return '239,68,68';
   if(k === 'J') return '59,130,246';
   if(k === 'L') return '249,115,22';
+  if(k === 'G') return '140,200,255';
+  if(k === 'E') return '168,85,247';
+  if(k === 'M') return '200,210,225';
+  if(k === 'R') return '220,228,240';
+  if(k === 'B') return '239,68,68';
+  if(k === 'C') return '56,189,248';
   return '255,255,255';
 }
 
@@ -2183,15 +2599,20 @@ function spawnParticlesForRow(rowY, kinds){
     const k = (Array.isArray(kinds) && kinds[x]) ? kinds[x] : null;
     const rgb = kindToRgb(k);
 
-    for(let i = 0; i < 4; i++){
+    // Glass: more particles + shard look. Others: keep original feel.
+    const isGlass = (k === 'G');
+    const count = isGlass ? 12 : 4;
+
+    for(let i = 0; i < count; i++){
       const p = document.createElement('div');
       p.className = 'particle';
 
       const px = x * cellSize + cellSize / 2;
       const py = rowY * cellSize + cellSize / 2;
 
-      const dx = (Math.random() - 0.5) * 120;
-      const dy = -Math.random() * 160;
+      // Wider spread for glass shards
+      const dx = (Math.random() - 0.5) * (isGlass ? 170 : 120);
+      const dy = -Math.random() * (isGlass ? 220 : 160);
 
       p.style.left = px + 'px';
       p.style.top  = py + 'px';
@@ -2199,47 +2620,297 @@ function spawnParticlesForRow(rowY, kinds){
       p.style.setProperty('--dy', dy + 'px');
       p.style.setProperty('--prgb', rgb);
 
+      // Glass shard styling (visual-only)
+      if(isGlass){
+        const w = 3 + Math.random() * 5;     // 3–8
+        const h = 2 + Math.random() * 6;     // 2–8
+        p.style.width  = w + 'px';
+        p.style.height = h + 'px';
+        p.style.borderRadius = '2px';
+        p.style.boxShadow = '0 0 14px rgba(180,220,255,.22)';
+        p.style.setProperty('--rot', (Math.random() * 160 - 80).toFixed(1) + 'deg');
+      }else{
+        p.style.setProperty('--rot', '0deg');
+      }
+
       boardEl.appendChild(p);
       setTimeout(() => p.remove(), 500);
     }
   }
 }
 
+// Bomb blast ring (visual)
+function spawnBombBlastAt(x, y){
+  const boardEl = document.querySelector('.board');
+  if(!boardEl) return;
+  const rect = boardEl.getBoundingClientRect();
+  const cellSize = rect.width / 10;
+
+  const px = x * cellSize + cellSize / 2;
+  const py = y * cellSize + cellSize / 2;
+
+  const el = document.createElement('div');
+  el.className = 'bomb-blast';
+  el.style.setProperty('--bx', px + 'px');
+  el.style.setProperty('--by', py + 'px');
+  boardEl.appendChild(el);
+  setTimeout(() => el.remove(), 1500);
+}
+// Ice gravity: let 2x2 ice blocks fall as intact bodies (never split)
+function applyIceGravity(){
+  let movedAny = false;
+
+  // multiple passes to settle stacks
+  for(let pass = 0; pass < 30; pass++){
+    let moved = false;
+
+    // scan bottom-up so lower blocks settle first
+    for(let y = H - 2; y >= 0; y--){
+      for(let x = 0; x <= W - 2; x++){
+        // detect a 2x2 ice block with (x,y) as top-left
+        if(board[y][x] !== 'C') continue;
+        if(board[y][x+1] !== 'C' || board[y+1][x] !== 'C' || board[y+1][x+1] !== 'C') continue;
+
+
+        // can drop 1 step?
+        const by = y + 2; // cells below the bottom row
+        if(by >= H) continue;
+        if(board[by][x] || board[by][x+1]) continue;
+
+        // move down by 1
+        board[y][x] = null;
+        board[y][x+1] = null;
+        board[y+1][x] = null;
+        board[y+1][x+1] = null;
+
+        board[y+1][x] = 'C';
+        board[y+1][x+1] = 'C';
+        board[y+2][x] = 'C';
+        board[y+2][x+1] = 'C';
+
+        moved = true;
+        movedAny = true;
+      }
+    }
+
+    if(!moved) break;
+  }
+
+  return movedAny;
+}
+// Basic gravity: drop single cells straight down (skip ice 'C' because it's handled as 2x2 bodies)
+function applyBasicGravity(){
+  let movedAny = false;
+
+  // bottom-up so stacks settle correctly
+  for(let y = H - 2; y >= 0; y--){
+    for(let x = 0; x < W; x++){
+      const v = board[y][x];
+      if(!v) continue;
+      if(v === 'C') continue; // ice stays as 2x2 via applyIceGravity()
+
+      let ny = y;
+      while(ny + 1 < H && !board[ny + 1][x]){
+        ny++;
+      }
+      if(ny !== y){
+        board[ny][x] = v;
+        board[y][x] = null;
+        movedAny = true;
+      }
+    }
+  }
+  return movedAny;
+}
+
+// Apply gravity for ALL modes: ice first (2x2), then normal cells; repeat until settled
+function applyAllGravity(){
+  let movedAny = false;
+
+  for(let pass = 0; pass < 30; pass++){
+    const mIce = applyIceGravity();
+    const mBasic = applyBasicGravity();
+    if(!(mIce || mBasic)) break;
+    movedAny = movedAny || mIce || mBasic;
+  }
+  return movedAny;
+}
+
   function clearLines(){
     // 找出满行
     const full = [];
     for(let y=0;y<H;y++){
-      let ok = true;
-      for(let x=0;x<W;x++){
-        if(!board[y][x]) { ok = false; break; }
-      }
-      if(ok) full.push(y);
-    }
+  let ok = true;
+  for(let x=0;x<W;x++){
+    if(!board[y][x]) { ok = false; break; }
+  }
+  if(ok) full.push(y);
+}
 
     if(full.length === 0) return false;
 
+    // ===== Energy rule (chain) =====
+    // 规则：只要本次要清掉的行里有任何 E（不论它来自满行还是额外清行），就把该行的上一行+下一行也加入清除。
+    // 允许连锁：新增的行如果也包含 E，会继续扩散。
+    const toClear = new Set(full);
+
+    let changed = true;
+    while(changed){
+      changed = false;
+      for(const y of Array.from(toClear)){
+        // 这一行如果存在能量块 E，则扩散到上下行
+        if(board[y] && board[y].some(v => v === 'E')){
+          const a = y - 1;
+          const b = y + 1;
+          if(a >= 0 && !toClear.has(a)) { toClear.add(a); changed = true; }
+          if(b < H && !toClear.has(b)) { toClear.add(b); changed = true; }
+        }
+      }
+    }
+
+    // Ice CAN participate in making a row full, but ice cells themselves are not removed.
+const rowsToClear = Array.from(toClear).sort((a,b) => a-b);
+    // ===== Detect Energy trigger for this clear =====
+    const energyTriggered = rowsToClear.some(y => board[y] && board[y].some(v => v === 'E'));
+    const bombTriggered = rowsToClear.some(y => board[y] && board[y].some(v => v === 'B'));
+
+    if(energyTriggered){
+      // Energy: stronger slow-mo + staggered shatter
+      slowMoFactor = 1.55;             // 慢动作倍率（越大越慢）
+      slowMoUntil  = Date.now() + 760; // 持续时间 ms
+      energyClearActive = true;
+
+      document.documentElement.style.setProperty('--clear-dur', '0.42s');
+      document.documentElement.style.setProperty('--energy-stagger', '58ms');
+    }else if(bombTriggered){
+      // Bomb: slow-mo, but NOT the same shatter style as Energy
+      slowMoFactor = 1.25;
+      slowMoUntil  = Date.now() + 1050;
+      energyClearActive = false;
+
+      document.documentElement.style.setProperty('--clear-dur', '0.48s');
+      document.documentElement.style.setProperty('--energy-stagger', '46ms');
+    }else{
+      energyClearActive = false;
+      document.documentElement.style.setProperty('--clear-dur', '0.28s');
+      document.documentElement.style.setProperty('--energy-stagger', '46ms');
+    }
+
     // 进入消除动画状态
     clearing = true;
-    clearingRows = new Set(full);
-    clearingCount = full.length;
-    // === Step 6: snapshot row kinds before animation removes them ===
-    const clearKinds = full.map(y => board[y].slice());
+    clearingRows = new Set(rowsToClear);
+    // 仍然用 1-4 档的闪光强度（超过 4 行也按 4 行强度）
+    clearingCount = Math.min(4, rowsToClear.length);
+
+    // snapshot row kinds before animation removes them
+    const clearKinds = rowsToClear.map(y => board[y].slice());
+
+    // Snapshot bomb positions (no chain). Bomb explodes when it is removed by this clear.
+    const bombCells = [];
+    for(const y of rowsToClear){
+      for(let x = 0; x < W; x++){
+        if(board[y] && board[y][x] === 'B') bombCells.push([x, y]);
+      }
+    }
 
     // 播放动画一小段时间后，再真正删除行
     setTimeout(() => {
       // 粒子爆散效果（按每格颜色）
-      for(let i = 0; i < full.length; i++){
-        spawnParticlesForRow(full[i], clearKinds[i]);
-      }
-      // 删除满行
-      board = board.filter((_, y) => !clearingRows.has(y));
-      while(board.length < H) board.unshift(Array(W).fill(null));
-      if(noobMode){
-        applyNoobGravity();
+      for(let i = 0; i < rowsToClear.length; i++){
+        spawnParticlesForRow(rowsToClear[i], clearKinds[i]);
       }
 
-      // 计分/升级
-      const cleared = full.length;
+      // ===== Bomb rule (explode and clear neighbors 1 cell) =====
+      // Triggered when a bomb cell is removed by this clear.
+      // Clears surrounding 1-cell area, but does NOT chain additional clears.
+      if(bombCells.length){
+        for(const [bx, by] of bombCells){
+          // If this bomb is about to be removed (row is being cleared), play blast.
+          spawnBombBlastAt(bx, by);
+
+          // Clear ONLY vertical neighbors: self + up 1 cell + down 1 cell (no area / no extra rows)
+          const targets = [[bx, by], [bx, by - 1], [bx, by + 1]];
+          for(const [x, y] of targets){
+            if(x < 0 || x >= W || y < 0 || y >= H) continue;
+            const v = board[y][x];
+            if(v === 'M' || v === 'R') continue;
+            board[y][x] = null;
+          }
+        }
+      }
+
+      // ===== Metal rule (2-hit clear) =====
+      // M = dark metal (first life), R = light metal (second life)
+      // - If a cleared row contains any M: first hit -> keep metal, turn M -> R, clear the other cells in that row.
+      //   This does NOT count as a line clear and gives NO points.
+      // - If a cleared row contains any R: second hit -> remove it like normal clear.
+      // - When any R is fully removed in this clear, the score for this clear is x4.
+      const toDelete = new Set();
+let metalSecondHit = false;
+
+// ✅ 计分/lines 用：包含“冰块参与消行但不消本身”的那些行
+let clearedForScore = 0;
+
+for(const y of rowsToClear){
+  const row = board[y];
+  if(!row) continue;
+
+  const hasC = row.some(v => v === 'C');   // ✅ 冰块
+  const hasM = row.some(v => v === 'M');   // 金属1命
+  const hasR = row.some(v => v === 'R');   // 金属2命
+
+  // ===== Metal rule (first hit) =====
+  if(hasM){
+    // first hit: keep metal blocks, lighten them, clear others
+    for(let x = 0; x < W; x++){
+      if(board[y][x] === 'M') board[y][x] = 'R';
+      else board[y][x] = null;
+    }
+    // ❗有 M 的行：不算真正消行、不加分（保持你原规则）
+    continue;
+  }
+
+  // ===== Ice rule =====
+  // ✅ 冰块可以让这一行“算消行”，但 C 本身不消失
+  if(hasC){
+    // 这行不删除，只清掉非 C
+    for(let x = 0; x < W; x++){
+      if(board[y][x] !== 'C') board[y][x] = null;
+    }
+    // 这一行算作“消行”（加 lines/加分）
+    clearedForScore++;
+
+    // 如果这行里有 R，被清掉了 -> 触发 x4
+    if(hasR) metalSecondHit = true;
+
+    // 不 toDelete
+    continue;
+  }
+
+  // ===== Normal delete (includes second-hit metal) =====
+  if(hasR) metalSecondHit = true;
+  toDelete.add(y);
+  clearedForScore++;
+}
+
+// Delete rows that are truly cleared
+board = board.filter((_, y) => !toDelete.has(y));
+while(board.length < H) board.unshift(Array(W).fill(null));
+
+if(noobMode){
+  // 菜鸡：单格像沙子一样掉（保持你现在的）
+  applyNoobGravity();
+} else {
+  // 其他模式：整块整体往下掉
+  applyRigidGravity();
+}
+
+// 冰块保持 2x2 整体下落（你原本的规则）
+applyIceGravity();
+// ✅ 计分/升级：用 clearedForScore（冰块行也算）
+const cleared = clearedForScore;
+const metalMultiplier = metalSecondHit ? 4 : 1;
+      
 
       // ===== COMBO =====
       combo = (combo || 0) + 1;
@@ -2263,7 +2934,10 @@ function spawnParticlesForRow(rowY, kinds){
       }
 
       lines += cleared;
-      score += (lineScore[cleared] || 0) * level;
+      score += ((lineScore[cleared] || 0) * level) * metalMultiplier;
+      if(metalSecondHit && cleared > 0){
+        showToast(`x${metalMultiplier} SCORE!`, 'metal');
+      }
       if(proMode) level = 1 + Math.floor(lines/2);
 
       // ===== PERFECT CLEAR =====
@@ -2283,7 +2957,7 @@ function spawnParticlesForRow(rowY, kinds){
 
       // 继续生成下一块（重要：这里再 spawn）
       spawn();
-    }, 280); // 和 CSS 动画时间匹配（.28s）
+    }, energyTriggered ? 420 : 280);// 和 CSS 动画时间匹配（.28s）
 
     return true;
   }
@@ -2301,6 +2975,100 @@ function applyNoobGravity(){
       }
     }
   }
+}
+// ===== Rigid gravity: drop connected components as whole bodies =====
+// 规则：同一种方块(kind)连在一起(上下左右)算一个“整体图形”，整体下落，绝不散成单格
+function applyRigidGravity(){
+  let movedAny = false;
+
+  for(let pass = 0; pass < 30; pass++){
+    // 1) 找所有组件（同 kind 的连通块）
+    const visited = Array.from({length:H}, () => Array(W).fill(false));
+    const comps = [];
+
+    for(let y=0; y<H; y++){
+      for(let x=0; x<W; x++){
+        const v = board[y][x];
+        if(!v) continue;
+        if(v === 'C') continue; // 冰块用你自己的 2x2 逻辑处理
+        if(visited[y][x]) continue;
+
+        // BFS/DFS
+        const kind = v;
+        const stack = [[x,y]];
+        visited[y][x] = true;
+        const cells = [];
+        let maxY = y;
+
+        while(stack.length){
+          const [cx,cy] = stack.pop();
+          cells.push([cx,cy]);
+          if(cy > maxY) maxY = cy;
+
+          const neigh = [[cx-1,cy],[cx+1,cy],[cx,cy-1],[cx,cy+1]];
+          for(const [nx,ny] of neigh){
+            if(nx<0||nx>=W||ny<0||ny>=H) continue;
+            if(visited[ny][nx]) continue;
+            if(board[ny][nx] !== kind) continue;
+            visited[ny][nx] = true;
+            stack.push([nx,ny]);
+          }
+        }
+
+        comps.push({ kind, cells, maxY });
+      }
+    }
+
+    if(comps.length === 0) break;
+
+    // 2) 计算每个组件能整体下落多少格
+    // 为了不互相干扰：先算 drop（基于当前 board），再按 maxY 从低到高（底部优先）应用
+    // 做一个快速查找：某格是否属于该组件
+    const drops = comps.map(comp => {
+      const set = new Set(comp.cells.map(([x,y]) => `${x},${y}`));
+      let d = Infinity;
+
+      for(const [x,y] of comp.cells){
+        let step = 0;
+        while(true){
+          const ny = y + step + 1;
+          if(ny >= H) break;
+          const below = board[ny][x];
+          if(below && !set.has(`${x},${ny}`)) break; // 撞到别的块
+          step++;
+        }
+        d = Math.min(d, step);
+        if(d === 0) break;
+      }
+      return { comp, set, drop: (d === Infinity ? 0 : d) };
+    });
+
+    // 3) 应用移动（底部组件先移动，避免覆盖）
+    drops.sort((a,b) => b.comp.maxY - a.comp.maxY);
+
+    let movedThisPass = false;
+
+    for(const item of drops){
+      const { comp, drop } = item;
+      if(drop <= 0) continue;
+
+      // 清空原位置
+      for(const [x,y] of comp.cells){
+        board[y][x] = null;
+      }
+      // 写入新位置
+      for(const [x,y] of comp.cells){
+        board[y + drop][x] = comp.kind;
+      }
+
+      movedThisPass = true;
+      movedAny = true;
+    }
+
+    if(!movedThisPass) break;
+  }
+
+  return movedAny;
 }
   function ghostY(){
     let y = piece.y;
@@ -2357,12 +3125,34 @@ function updateHUD(){
     const v = board[y][x]; // "I"..."L" or null
     if(v){
       const idx = y*W+x;
-      cells[idx].classList.add('filled');
-      cells[idx].classList.add('kind-' + v);
-      if(clearingAll || clearingRows.has(y)){
-        cells[idx].classList.add('clearing');
-        if(clearingCount >= 1 && clearingCount <= 4) cells[idx].classList.add('clear-' + clearingCount);
-      }
+      const cell = cells[idx];
+cell.classList.add('filled');
+cell.classList.add('kind-' + v);
+
+if(clearingAll || clearingRows.has(y)){
+  cell.classList.add('clearing');
+  if(clearingCount >= 1 && clearingCount <= 4) cell.classList.add('clear-' + clearingCount);
+
+  if(energyClearActive && clearingRows.has(y)){
+    if(v === 'E'){
+      cell.classList.add('energy-first');
+      cell.classList.remove('energy-late');
+      cell.style.setProperty('--ad', '0ms');
+    }else{
+      cell.classList.add('energy-late');
+      cell.classList.remove('energy-first');
+      // “一个个碎掉”：按列错峰（0~9），能看出来但不慢
+      const d = x * 18; // ms
+      cell.style.setProperty('--ad', `calc(var(--energy-stagger, 46ms) + ${d}ms)`);
+    }
+  }else{
+    cell.classList.remove('energy-first','energy-late');
+    cell.style.removeProperty('--ad');
+  }
+}else{
+  cell.classList.remove('energy-first','energy-late');
+  cell.style.removeProperty('--ad');
+}
     }
   }
 }
@@ -2453,7 +3243,13 @@ paused=false; gameOver=false;
   ? Math.max(0.08, 0.4 - (level-1)*0.015)   // 你原来的机制
   : stageIntervalFor(stage);                 // 关卡固定速度
 
-const interval = baseInterval * mercyMultiplier;
+    const nowMs = Date.now();
+    const slowFactor = (nowMs < slowMoUntil) ? slowMoFactor : 1;
+
+    let interval = baseInterval * mercyMultiplier * slowFactor;
+    // Ice piece falls slower
+    if(piece && piece.kind === 'C') interval *= 1.45;
+
     if(acc >= interval){
       acc = 0;
       if(canPlace(piece,0,1,0)) piece.y += 1;
