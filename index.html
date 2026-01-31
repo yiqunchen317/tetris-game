@@ -1253,6 +1253,7 @@ max-width: 560px;
   font-size: 12px;
   color: var(--muted);
 }
+
 /* ===== Line clear particles ===== */
 .particle{
   position: absolute;
@@ -1264,6 +1265,7 @@ max-width: 560px;
   pointer-events: none;
   animation: particleFly .45s ease-out forwards;
 }
+
 
 @keyframes particleFly{
   from{
@@ -1446,6 +1448,22 @@ color: rgba(229,231,235,.62);
       <div class="start-title">TETRIS</div>
       <div class="start-sub">点击开始游戏</div>
       <button id="btnStart" class="start-btn">开始游戏 ▶</button>
+
+<!-- ✅ NEW: Start screen extra buttons -->
+<button id="btnStartMode" class="start-btn ghost">选择模式 ▾</button>
+
+<div id="startModeMenu" class="start-menu" hidden>
+  <button class="start-menu-item" data-mode="normal">普通模式 🙂</button>
+  <button class="start-menu-item" data-mode="mercy">求饶模式 🥺</button>
+  <button class="start-menu-item" data-mode="pro">大神模式 ⚡（慢慢变快）</button>
+  <button class="start-menu-item" data-mode="noob">菜鸡模式 🐣（悬空自动落）</button>
+  <button class="start-menu-item" data-mode="endless">无尽模式 ♾️（爽死你）</button>
+</div>
+
+<button id="btnStartHistory" class="start-btn ghost">历史记录 🗂️</button>
+<!-- ✅ NEW END -->
+
+<div class="start-tip">键盘 / 手机按键都支持</div>
       <div class="start-tip">键盘 / 手机按键都支持</div>
     </div>
   </div>
@@ -2401,6 +2419,55 @@ summaryModal?.addEventListener('click', (e) => {
   if(e.target === summaryModal) closeSummaryModal();
 });
 btnHistory?.addEventListener('click', () => openHistoryModal());
+// ===== Start screen: Mode + History buttons =====
+const btnStartMode = document.getElementById('btnStartMode');
+const btnStartHistory = document.getElementById('btnStartHistory');
+const startModeMenu = document.getElementById('startModeMenu');
+
+function updateStartModeLabel(){
+  if(!btnStartMode) return;
+  btnStartMode.textContent = `模式：${modeLabel()} ▾`;
+}
+
+// 点击“选择模式” -> 展开/收起菜单
+btnStartMode?.addEventListener('click', () => {
+  if(!startModeMenu) return;
+  startModeMenu.hidden = !startModeMenu.hidden;
+});
+
+// 点击“历史记录” -> 直接打开你现成的历史弹窗
+btnStartHistory?.addEventListener('click', () => {
+  openHistoryModal?.();
+});
+
+// 菜单里点某个模式
+startModeMenu?.querySelectorAll('.start-menu-item[data-mode]').forEach((b) => {
+  b.addEventListener('click', () => {
+    const k = b.getAttribute('data-mode');
+
+    // ✅ 关键：如果还没开始游戏，只“预选模式”，不直接开局
+    if(!started){
+      if(k === 'mercy'){
+        setFlagsByModeKey('mercy');
+        openMercy?.();        // 你已有的求饶暗号弹窗
+      }else{
+        setFlagsByModeKey(k); // 只改模式 flag，不 reset 不开局
+      }
+      applyThemeByMode?.();
+      updateStartModeLabel();
+      startModeMenu.hidden = true;
+      return;
+    }
+
+    // 如果已经在玩了，那就按你原来的逻辑切模式（会弹继续/重开等）
+    requestModeChange?.(k);
+    updateStartModeLabel();
+    startModeMenu.hidden = true;
+  });
+});
+
+// 初始刷新一次按钮文字
+updateStartModeLabel();
 historyClose?.addEventListener('click', () => closeHistoryModal());
 historyModal?.addEventListener('click', (e) => {
   if(e.target === historyModal) closeHistoryModal();
