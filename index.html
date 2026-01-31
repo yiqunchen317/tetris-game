@@ -1253,6 +1253,26 @@ max-width: 560px;
   font-size: 12px;
   color: var(--muted);
 }
+.start-actions{
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+.start-btn.ghost{
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.10);
+}
+@media (max-width: 520px){
+  .start-actions{ gap: 8px; }
+}
+/* Start screen: show mobile menu only on phone */
+.start-mobile{ display:none; }
+.start-desktop{ display:block; }
+
+@media (max-width: 600px){
+  .start-mobile{ display:block; }
+  .start-desktop{ display:none; }
+}
 /* ===== Line clear particles ===== */
 .particle{
   position: absolute;
@@ -1440,13 +1460,31 @@ color: rgba(229,231,235,.62);
   <div class="hud-row"><span>Lines</span><b id="hudLines">0</b></div>
   <div class="hud-row"><span>Stage</span><b id="hudStage">1</b></div>
 </div>
-      <!-- Start Screen -->
-  <div id="startScreen" class="start show">
-    <div class="start-card">
-      <div class="start-title">TETRIS</div>
-      <div class="start-sub">点击开始游戏</div>
-      <button id="btnStart" class="start-btn">开始游戏 ▶</button>
-      <div class="start-tip">键盘 / 手机按键都支持</div>
+     <!-- Start Screen -->
+<div id="startScreen" class="start show">
+  <!-- 手机菜单：3个按钮（只在手机显示） -->
+  <div class="start-card start-mobile">
+    <div class="start-title">TETRIS</div>
+    <div class="start-sub">主菜单</div>
+
+    <div class="start-actions">
+      <button id="btnStartM" class="start-btn">开始游戏 ▶（普通）</button>
+      <button id="btnStartModesM" class="start-btn ghost">模式选择 🎮</button>
+      <button id="btnStartHistoryM" class="start-btn ghost">历史记录 🗂️</button>
+    </div>
+
+    <div class="start-tip">提示：手机不用下滑，直接在这里选模式/看历史。</div>
+  </div>
+
+  <!-- 桌面菜单：保留一个开始按钮（默认显示） -->
+  <div class="start-card start-desktop">
+    <div class="start-title">TETRIS</div>
+    <div class="start-sub">点击开始游戏</div>
+    <button id="btnStart" class="start-btn">开始游戏 ▶</button>
+    <div class="start-tip">键盘 / 手机按键都支持</div>
+  </div>
+</div>
+      
     </div>
   </div>
     </div>
@@ -1474,17 +1512,25 @@ color: rgba(229,231,235,.62);
           （手机一样的操作，相同按钮）666
         </p>
       </div>
-
-      <div class="card tips">
-        <p class="title">Tips</p>
-        <p class="hint" style="margin:0">
-          你群哥耗费一周精心打造，有啥不会的来问我<br/>
-          啊哈哈哈哈哈哈。
-        </p>
       </div>
     </div>
   </div>
+<!-- Start Mode Select Modal -->
+<div id="startModeModal" class="modal" aria-hidden="true">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="startModeTitle">
+    <div class="modal-title" id="startModeTitle">选择模式 🎮</div>
+    <div class="modal-desc" style="margin-bottom:12px">点一个模式就会立即开始（或继续/重开弹窗）。</div>
 
+    <div class="btns">
+      <button id="startModeNormal">普通模式 🙂</button>
+      <button id="startModeMercy">求饶模式 🥺</button>
+      <button id="startModePro">大神模式 ⚡（慢慢变快）</button>
+      <button id="startModeNoob">菜鸡模式 🐣（悬空自动落）</button>
+      <button id="startModeEndless">无尽模式 ♾️（爽死你）</button>
+      <button id="startModeClose" class="danger">关闭</button>
+    </div>
+  </div>
+</div>
   <!-- Mobile Controls (touch) -->
   <div id="mobileControls" class="mctl" aria-label="mobile controls">
     <button class="mbtn" data-act="left">⬅</button>
@@ -1644,6 +1690,23 @@ const hudStageEl = document.getElementById('hudStage');
   const btnEndless = document.getElementById('btnEndless');
   const btnNormal = document.getElementById('btnNormal');
   const btnReset = document.getElementById('btnReset');
+// ===== Start screen quick menu =====
+const btnStartEl = document.getElementById('btnStart');
+const btnStartElM = document.getElementById('btnStartM');
+
+const btnStartModes = document.getElementById('btnStartModes');
+const btnStartModesM = document.getElementById('btnStartModesM');
+
+const btnStartHistory = document.getElementById('btnStartHistory');
+const btnStartHistoryM = document.getElementById('btnStartHistoryM');
+
+const startModeModal = document.getElementById('startModeModal');
+const startModeNormal = document.getElementById('startModeNormal');
+const startModeMercy = document.getElementById('startModeMercy');
+const startModePro = document.getElementById('startModePro');
+const startModeNoob = document.getElementById('startModeNoob');
+const startModeEndless = document.getElementById('startModeEndless');
+const startModeClose = document.getElementById('startModeClose');
   if(btnReset) btnReset.classList.add('danger');
 
 const endlessModal = document.getElementById('endlessModal');
@@ -1898,6 +1961,16 @@ function closeSummaryModal(){
   if(!summaryModal) return;
   summaryModal.classList.remove('show');
   summaryModal.setAttribute('aria-hidden','true');
+}
+function openStartModeModal(){
+  if(!startModeModal) return;
+  startModeModal.classList.add('show');
+  startModeModal.setAttribute('aria-hidden','false');
+}
+function closeStartModeModal(){
+  if(!startModeModal) return;
+  startModeModal.classList.remove('show');
+  startModeModal.setAttribute('aria-hidden','true');
 }
 function continueAfterGameOver(){
   summaryShown = false;
@@ -2352,7 +2425,32 @@ function renderSummary(){
     </div>
   `;
 }
+// ===== Start screen quick menu events =====
+btnStartModesM?.addEventListener('click', () => {
+  openStartModeModal();
+});
 
+
+btnStartHistoryM?.addEventListener('click', () => {
+  openHistoryModal();
+});
+
+startModeClose?.addEventListener('click', () => closeStartModeModal());
+startModeModal?.addEventListener('click', (e) => {
+  if(e.target === startModeModal) closeStartModeModal();
+});
+
+// Mode picks from start menu
+startModeNormal?.addEventListener('click', () => { closeStartModeModal(); requestModeChange('normal'); });
+startModeMercy?.addEventListener('click',  () => { closeStartModeModal(); requestModeChange('mercy');  });
+startModePro?.addEventListener('click',    () => { closeStartModeModal(); requestModeChange('pro');    });
+startModeNoob?.addEventListener('click',   () => { closeStartModeModal(); requestModeChange('noob');   });
+startModeEndless?.addEventListener('click',() => { closeStartModeModal(); requestModeChange('endless');});
+
+// Start game from menu: always Normal
+btnStartElM?.addEventListener('click', () => {
+  requestModeChange('normal');
+});
 // summary buttons
 summaryClose?.addEventListener('click', () => {
   // 如果是 GAME OVER 触发的总结：此时才算一局结束，写入历史
