@@ -22,6 +22,7 @@
       --text: #e5e7eb;
       --muted:#94a3b8;
       --shadow: rgba(0,0,0,.4);
+      --accent-rgb: 34,211,238; /* 默认普通模式主题色 */
     }
     *{box-sizing:border-box}
     /* ===== Splash (Launch Screen) ===== */
@@ -91,9 +92,35 @@
       font-family: ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", Arial;
       padding-bottom: calc(var(--mctl-pad, 0px) + env(safe-area-inset-bottom));
       overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      position: relative;
     }
+
+    /* ===== Subtle film grain / noise (Step 10) ===== */
+    body::before{
+      content:"";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: .06;
+      mix-blend-mode: overlay;
+      background:
+        repeating-linear-gradient(0deg,
+          rgba(255,255,255,.08) 0px,
+          rgba(255,255,255,.08) 1px,
+          rgba(0,0,0,0) 2px,
+          rgba(0,0,0,0) 4px),
+        repeating-linear-gradient(90deg,
+          rgba(255,255,255,.06) 0px,
+          rgba(255,255,255,.06) 1px,
+          rgba(0,0,0,0) 2px,
+          rgba(0,0,0,0) 6px);
+      filter: contrast(120%);
+    }
+    /* Ensure UI sits above noise */
+    .wrap{ position: relative; z-index: 1; }
     .wrap{
       display:grid;
       grid-template-columns: auto 260px;
@@ -105,16 +132,55 @@
       box-shadow: 0 18px 40px var(--shadow);
       backdrop-filter: blur(10px);
       margin-bottom: 0;
+      border-color: rgba(var(--accent-rgb), .22);
+      box-shadow: 0 18px 40px var(--shadow), 0 0 0 1px rgba(var(--accent-rgb), .10);
     }
     .board{
       position:relative;
       width: calc(var(--cell) * 10 + var(--gap) * 9);
       height: calc(var(--cell) * 20 + var(--gap) * 19);
-      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
-      border:1px solid rgba(255,255,255,.08);
+      background:
+  /* subtle texture */
+  repeating-linear-gradient(0deg,
+    rgba(255,255,255,.03) 0px,
+    rgba(255,255,255,.03) 1px,
+    rgba(0,0,0,0) 2px,
+    rgba(0,0,0,0) 6px),
+  repeating-linear-gradient(90deg,
+    rgba(255,255,255,.02) 0px,
+    rgba(255,255,255,.02) 1px,
+    rgba(0,0,0,0) 2px,
+    rgba(0,0,0,0) 10px),
+  /* accent glow */
+  radial-gradient(700px 420px at 50% 0%, rgba(var(--accent-rgb), .10), rgba(0,0,0,0) 60%),
+  /* base */
+  linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+      border:1px solid rgba(var(--accent-rgb), .22);
       border-radius:12px;
       overflow:hidden;
     }
+    /* Vignette (subtle dark corners) */
+.board::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  z-index:2;
+  background:
+    radial-gradient(900px 520px at 50% 20%, rgba(255,255,255,.05), rgba(0,0,0,0) 55%),
+    radial-gradient(900px 650px at 50% 70%, rgba(0,0,0,0), rgba(0,0,0,.55) 85%);
+  mix-blend-mode: multiply;
+  opacity:.9;
+}
+/* ===== Flash ONLY on hard drop (Space / DROP) ===== */
+.board.drop-pop{
+  animation: dropPop .26s ease-out;
+}
+@keyframes dropPop{
+  0%{ box-shadow: 0 0 0 0 rgba(var(--accent-rgb), .0); }
+  35%{ box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .26), 0 0 30px rgba(var(--accent-rgb), .22); }
+  100%{ box-shadow: 0 0 0 0 rgba(var(--accent-rgb), .0); }
+}
     .grid{
       position:absolute; inset:0;
       display:grid;
@@ -126,26 +192,88 @@
     .cell{
       width:var(--cell); height:var(--cell);
       background: rgba(15, 23, 42, .55);
-      border:1px solid var(--line);
-      border-radius:6px;
+      border:1px solid rgba(255,255,255,.045);
+border-radius:5px;
     }
     .cell.filled{
       border:none;
       box-shadow: inset 0 0 0 1px rgba(255,255,255,.14);
       background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.06));
     }
-    .cell.ghost{
-      background: transparent;
-      box-shadow: inset 0 0 0 2px rgba(255,255,255,.14);
-      border:none;
-      opacity:.55;
-    }
+    /* ===== Piece color themes (subtle neon + glass) ===== */
+.cell.filled.kind-I{
+  background: linear-gradient(135deg, rgba(34,211,238,.60), rgba(34,211,238,.18));
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.16),
+    0 0 12px rgba(34,211,238,.18);
+}
+.cell.filled.kind-O{
+  background: linear-gradient(135deg, rgba(250,204,21,.62), rgba(250,204,21,.18));
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.16),
+    0 0 12px rgba(250,204,21,.16);
+}
+.cell.filled.kind-T{
+  background: linear-gradient(135deg, rgba(168,85,247,.62), rgba(168,85,247,.18));
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.16),
+    0 0 12px rgba(168,85,247,.16);
+}
+.cell.filled.kind-S{
+  background: linear-gradient(135deg, rgba(34,197,94,.60), rgba(34,197,94,.18));
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.16),
+    0 0 12px rgba(34,197,94,.14);
+}
+.cell.filled.kind-Z{
+  background: linear-gradient(135deg, rgba(239,68,68,.62), rgba(239,68,68,.18));
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.16),
+    0 0 12px rgba(239,68,68,.14);
+}
+.cell.filled.kind-J{
+  background: linear-gradient(135deg, rgba(59,130,246,.62), rgba(59,130,246,.18));
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.16),
+    0 0 12px rgba(59,130,246,.14);
+}
+.cell.filled.kind-L{
+  background: linear-gradient(135deg, rgba(249,115,22,.62), rgba(249,115,22,.18));
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.16),
+    0 0 12px rgba(249,115,22,.14);
+}
+
+/* Keep ghost readable over colors */
+.cell.ghost{
+  background: rgba(255,255,255,.03);
+  border: 1px dashed rgba(255,255,255,.20);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.10);
+  opacity: .62;
+}
+/* Ghost tint by piece kind */
+.cell.ghost.kind-I{ border-color: rgba(34,211,238,.32); box-shadow: inset 0 0 0 2px rgba(34,211,238,.28), 0 0 10px rgba(34,211,238,.08); }
+.cell.ghost.kind-O{ border-color: rgba(250,204,21,.32); box-shadow: inset 0 0 0 2px rgba(250,204,21,.28), 0 0 10px rgba(250,204,21,.07); }
+.cell.ghost.kind-T{ border-color: rgba(168,85,247,.32); box-shadow: inset 0 0 0 2px rgba(168,85,247,.28), 0 0 10px rgba(168,85,247,.07); }
+.cell.ghost.kind-S{ border-color: rgba(34,197,94,.30); box-shadow: inset 0 0 0 2px rgba(34,197,94,.26), 0 0 10px rgba(34,197,94,.06); }
+.cell.ghost.kind-Z{ border-color: rgba(239,68,68,.30); box-shadow: inset 0 0 0 2px rgba(239,68,68,.26), 0 0 10px rgba(239,68,68,.06); }
+.cell.ghost.kind-J{ border-color: rgba(59,130,246,.30); box-shadow: inset 0 0 0 2px rgba(59,130,246,.26), 0 0 10px rgba(59,130,246,.06); }
+.cell.ghost.kind-L{ border-color: rgba(249,115,22,.30); box-shadow: inset 0 0 0 2px rgba(249,115,22,.26), 0 0 10px rgba(249,115,22,.06); }
     .cell.next{
   border:none;
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.10);
-  background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03));
+  background: linear-gradient(135deg, rgba(255,255,255,.10), rgba(255,255,255,.03));
   opacity: .32;
 }
+
+    /* Next preview tint by piece kind (Step 10) */
+    .cell.next.kind-I{ background: linear-gradient(135deg, rgba(34,211,238,.22), rgba(34,211,238,.06)); }
+    .cell.next.kind-O{ background: linear-gradient(135deg, rgba(250,204,21,.22), rgba(250,204,21,.06)); }
+    .cell.next.kind-T{ background: linear-gradient(135deg, rgba(168,85,247,.22), rgba(168,85,247,.06)); }
+    .cell.next.kind-S{ background: linear-gradient(135deg, rgba(34,197,94,.20), rgba(34,197,94,.06)); }
+    .cell.next.kind-Z{ background: linear-gradient(135deg, rgba(239,68,68,.20), rgba(239,68,68,.06)); }
+    .cell.next.kind-J{ background: linear-gradient(135deg, rgba(59,130,246,.20), rgba(59,130,246,.06)); }
+    .cell.next.kind-L{ background: linear-gradient(135deg, rgba(249,115,22,.20), rgba(249,115,22,.06)); }
 
     .side{
       display:flex;
@@ -162,6 +290,36 @@
       margin-left: auto;
   margin-right: auto;
   width: 100%;
+    }
+
+    /* ===== Side hierarchy: primary card vs tips card ===== */
+    .card.primary{
+      background: rgba(16,24,39,.78);
+      border-color: rgba(var(--accent-rgb), .28);
+      box-shadow: 0 16px 36px rgba(0,0,0,.35), 0 0 0 1px rgba(var(--accent-rgb), .10);
+    }
+
+    .card.primary .title{
+      letter-spacing: .9px;
+    }
+
+    .card.tips{
+      background: rgba(16,24,39,.38);
+      border-color: rgba(255,255,255,.06);
+      padding: 10px 12px;
+      opacity: .86;
+    }
+
+    .card.tips .title{
+      font-size: 13px;
+      opacity: .85;
+      margin-bottom: 4px;
+    }
+
+    .card.tips .hint{
+      font-size: 12px;
+      line-height: 1.5;
+      color: rgba(148,163,184,.92);
     }
     .title{
       font-weight:800;
@@ -196,8 +354,41 @@
       background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.06));
       color:var(--text);
       border:1px solid rgba(255,255,255,.10);
+
+      /* smoother, unified feel */
+      transform: translateY(0);
+      transition:
+        border-color .16s ease,
+        background .16s ease,
+        box-shadow .16s ease,
+        transform .12s ease,
+        filter .16s ease;
+      will-change: transform;
     }
-    button:active{transform: translateY(1px)}
+    button:active{
+      transform: translateY(1px);
+      filter: brightness(.98);
+      box-shadow: none;
+    }
+    /* ===== Button states (Step 8) ===== */
+    button:hover{
+      border-color: rgba(var(--accent-rgb, 34,211,238), .35);
+      filter: brightness(1.06);
+      transform: translateY(-1px);
+      box-shadow: 0 12px 28px rgba(0,0,0,.28);
+    }
+    button.active{
+      border-color: rgba(var(--accent-rgb, 34,211,238), .60);
+      box-shadow: 0 0 0 2px rgba(var(--accent-rgb, 34,211,238), .18), 0 10px 25px rgba(0,0,0,.25);
+      background: linear-gradient(135deg, rgba(var(--accent-rgb, 34,211,238), .22), rgba(255,255,255,.06));
+      transform: translateY(-1px);
+    }
+    button.danger{
+      border-color: rgba(239,68,68,.35);
+    }
+    button.danger:hover{
+      border-color: rgba(239,68,68,.55);
+    }
     .overlay{
       position:absolute; inset:0;
       display:flex;
@@ -244,15 +435,117 @@
       min-width: 52px;
       height: 48px;
       border-radius: 14px;
-      font-weight: 800;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.10);
+      font-weight: 900;
+      letter-spacing: .3px;
+      -webkit-appearance: none;
+      appearance: none;
+      position: relative;
+      overflow: hidden;
+
+      /* layered “keycap” look */
+      border: 1px solid rgba(255,255,255,.22);
+      background:
+        radial-gradient(140% 120% at 30% 18%, rgba(255,255,255,.30), rgba(255,255,255,0) 58%),
+        linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.07));
       color: var(--text);
-      box-shadow: 0 10px 25px rgba(0,0,0,.25);
+
+      /* depth */
+      box-shadow:
+        inset 0 2px 0 rgba(255,255,255,.20),
+        0 16px 34px rgba(0,0,0,.36),
+        inset 0 1px 0 rgba(255,255,255,.18),
+        inset 0 -14px 22px rgba(0,0,0,.30);
+
       padding: 0 14px;
+      transition:
+        transform .10s ease,
+        filter .12s ease,
+        border-color .14s ease,
+        background .14s ease,
+        box-shadow .14s ease;
+      transform: translateY(0);
+      will-change: transform;
+      -webkit-tap-highlight-color: transparent;
+      text-shadow: 0 10px 22px rgba(0,0,0,.40);
+    }
+
+    /* Visible sheen layer (helps on iOS where gradients can look flat) */
+    .mbtn::after{
+      content:"";
+      position:absolute;
+      inset:-1px;
+      border-radius: inherit;
+      pointer-events:none;
+      background: linear-gradient(135deg,
+        rgba(255,255,255,.34) 0%,
+        rgba(255,255,255,.10) 22%,
+        rgba(255,255,255,0) 55%);
+      opacity: .60;
+      mix-blend-mode: normal;
+    }
+
+    .mbtn:active::after{ opacity: .14; }
+    .mbtn.active::after{ opacity: .44; }
+    .mbtn.active{
+      border-color: rgba(var(--accent-rgb, 34,211,238), .62);
+      background:
+        radial-gradient(140% 120% at 30% 18%, rgba(var(--accent-rgb, 34,211,238), .34), rgba(255,255,255,0) 60%),
+        linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.08));
+      box-shadow:
+        0 0 0 2px rgba(var(--accent-rgb, 34,211,238), .16),
+        0 14px 30px rgba(0,0,0,.28),
+        inset 0 1px 0 rgba(255,255,255,.12),
+        inset 0 -10px 18px rgba(0,0,0,.22);
+      filter: brightness(1.06);
     }
     .mbtn.wide{ min-width: 92px; }
-    .mbtn:active{ transform: scale(.96); }
+    .mbtn:active{
+      transform: translateY(1px) scale(.965);
+      filter: brightness(.96);
+      box-shadow:
+        0 8px 16px rgba(0,0,0,.26),
+        inset 0 1px 0 rgba(255,255,255,.08),
+        inset 0 -12px 22px rgba(0,0,0,.28);
+    }
+
+    /* Hover polish (desktop click users) */
+    @media (hover:hover){
+      .mbtn:hover{
+        filter: brightness(1.06);
+        border-color: rgba(var(--accent-rgb, 34,211,238), .32);
+        box-shadow:
+          0 16px 34px rgba(0,0,0,.32),
+          inset 0 1px 0 rgba(255,255,255,.12),
+          inset 0 -10px 18px rgba(0,0,0,.22);
+        transform: translateY(-1px);
+      }
+    }
+
+    /* Make DROP look like a “special” button without changing its size */
+    .mbtn[data-act="drop"]{
+      border-color: rgba(255,255,255,.18);
+      background:
+        radial-gradient(140% 120% at 30% 18%, rgba(255,255,255,.36), rgba(255,255,255,0) 60%),
+        linear-gradient(180deg, rgba(255,255,255,.26), rgba(255,255,255,.10));
+      box-shadow:
+        0 18px 40px rgba(0,0,0,.34),
+        inset 0 1px 0 rgba(255,255,255,.14),
+        inset 0 -12px 22px rgba(0,0,0,.26);
+      letter-spacing: .9px;
+    }
+
+    .mbtn[data-act="drop"]:active{
+      transform: translateY(1px) scale(.955);
+    }
+
+    /* Subtle icon clarity for arrow/rotate */
+    .mbtn[data-act="left"],
+    .mbtn[data-act="right"],
+    .mbtn[data-act="down"],
+    .mbtn[data-act="rotate"]{
+      font-size: 18px;
+      text-shadow: 0 10px 22px rgba(0,0,0,.35);
+    }
 
     @media (max-width: 520px){
       .mbtn{ min-width: 56px; height: 52px; font-size: 16px; }
@@ -260,16 +553,16 @@
     }
     /* ===== Fix mobile alignment ===== */
     @media (max-width: 600px) {
-      .side .card{
-  padding: 10px 12px;
-  /* 确保“各种模式按钮区”不产生横向溢出 */
-.side .btns{ width: 100%; }
-.side .btns button{ width: 100%; }
+  .side .card{
+    padding: 10px 12px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+  }
 
-  margin-left: auto;
-  margin-right: auto;
-  width: 100%;
-}
+  /* 确保“各种模式按钮区”不产生横向溢出 */
+  .side .btns{ width: 100%; }
+  .side .btns button{ width: 100%; }
   /* Make the board as large as the phone width/height allows */
   :root{
     /* Fit by width */
@@ -393,7 +686,7 @@ max-width: 560px;
   inset: 0;
   width: 100vw;
   height: 100svh; /* iOS/PWA 更稳的视口高度 */
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(2,6,23,.55);
@@ -408,12 +701,24 @@ max-width: 560px;
     12px
     calc(12px + env(safe-area-inset-bottom))
     12px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .22s ease, visibility 0s linear .22s;
 }
 
-.modal.show{ display: flex; }
+.modal.show{
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity .22s ease, visibility 0s;
+}
 
 .modal-card{
   width: min(520px, 92vw);
+  transform: translateY(14px) scale(.98);
+  opacity: 0;
+  transition: transform .22s cubic-bezier(.2,.8,.2,1), opacity .22s ease;
 
   /* 关键：限制卡片高度，并让卡片自己滚动 */
   max-height: calc(100svh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
@@ -425,6 +730,18 @@ max-width: 560px;
   padding: 14px;
   box-shadow: 0 18px 50px rgba(0,0,0,.45);
   backdrop-filter: blur(10px);
+}
+
+    .modal.show .modal-card{
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce){
+  button, .mbtn, .modal, .modal-card{
+    transition: none !important;
+    animation: none !important;
+  }
 }
 
 .modal-title{
@@ -506,6 +823,11 @@ max-width: 560px;
   pointer-events: none;
   z-index: 15000; /* 比弹窗低也行，但要比游戏高 */
 }
+/* Toast color themes */
+.toast.combo{ color: rgba(34,211,238,.98); }
+.toast.b2b{ color: rgba(168,85,247,.98); }
+.toast.pc{ color: rgba(250,204,21,.98); }
+.toast.tetris{ color: rgba(255,255,255,.98); }
 
 .toast.show{
   animation: toastFlash 1.2s ease-out forwards;
@@ -566,7 +888,8 @@ max-width: 560px;
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: rgba(255,255,255,.85);
+  background: rgba(var(--prgb, 255,255,255), .90);
+  box-shadow: 0 0 12px rgba(var(--prgb, 255,255,255), .22);
   pointer-events: none;
   animation: particleFly .45s ease-out forwards;
 }
@@ -581,18 +904,22 @@ max-width: 560px;
     opacity: 0;
   }
 }
-/* ===== Line clear animation ===== */
-/* ===== Line clear animation ===== */
+    /* ===== Line clear animation ===== */
+/* Clear flash intensity by clear count */
+.cell.clearing.clear-1{ filter: brightness(1.6); }
+.cell.clearing.clear-2{ filter: brightness(1.9); }
+.cell.clearing.clear-3{ filter: brightness(2.15); }
+.cell.clearing.clear-4{ filter: brightness(2.35); }
 .cell.clearing{
   animation: shatter .28s cubic-bezier(.2,.8,.2,1) forwards;
   transform-origin: center;
 }
 
 @keyframes shatter{
-  0%   { transform: scale(1);    opacity: 1;   filter: brightness(1); }
-  20%  { transform: scale(1.22); opacity: 1;   filter: brightness(2.2); }
-  60%  { transform: scale(.9);   opacity: .45; filter: brightness(1.2) blur(1px); }
-  100% { transform: scale(.55);  opacity: 0;   filter: brightness(.8) blur(2px); }
+  0%   { transform: scale(1);    opacity: 1; }
+  20%  { transform: scale(1.22); opacity: 1; }
+  60%  { transform: scale(.9);   opacity: .45; }
+  100% { transform: scale(.55);  opacity: 0; }
 }
 /* ===== Faded HUD inside board ===== */
 .hud{
@@ -601,7 +928,7 @@ max-width: 560px;
   top: 14px;
   z-index: 4;
   pointer-events: none;
-  opacity: .35;
+  opacity: .30;
   text-shadow: 0 10px 30px rgba(0,0,0,.55);
 }
 
@@ -609,20 +936,32 @@ max-width: 560px;
   display:flex;
   align-items: baseline;
   gap: 10px;
-  font-size: 16px;
-  color: rgba(229,231,235,.75);
+  font-size: 13px;
+color: rgba(229,231,235,.62);
   margin: 6px 0;
 }
-
+.hud-row span{
+  font-size: 11px;
+  letter-spacing: .9px;
+  text-transform: uppercase;
+  opacity: .75;
+}
 .hud-row b{
-  font-size: 22px;
-  font-weight: 900;
-  color: rgba(229,231,235,.95);
+  font-size: 24px;
+  font-weight: 950;
+  color: rgba(229,231,235,.98);
 }
 
 @media (max-width: 520px){
-  .hud-row{ font-size: 15px; }
-  .hud-row b{ font-size: 20px; }
+  .hud-row{
+    font-size: 12px;
+  }
+  .hud-row span{
+    font-size: 10px;
+  }
+  .hud-row b{
+    font-size: 22px;
+  }
 }
 
 /* ===== History Modal ===== */
@@ -725,7 +1064,7 @@ max-width: 560px;
     </div>
 
     <div class="side">
-      <div class="card">
+      <div class="card primary">
         <p class="title">TETRIS</p>
         <div class="row"><span>Score</span><b id="score">0</b></div>
         <div class="row"><span>Level</span><b id="level">1</b></div>
@@ -748,7 +1087,7 @@ max-width: 560px;
         </p>
       </div>
 
-      <div class="card">
+      <div class="card tips">
         <p class="title">Tips</p>
         <p class="hint" style="margin:0">
           你群哥耗费一周精心打造，有啥不会的来问我<br/>
@@ -900,9 +1239,8 @@ max-width: 560px;
   }
   const W = 10, H = 20;
 
-  // 0 empty, 1 filled
-  let board = Array.from({length:H}, () => Array(W).fill(0));
-
+  // null empty, or "I"/"O"/"T"/"S"/"Z"/"J"/"L" for filled cells
+let board = Array.from({length:H}, () => Array(W).fill(null));
   const gridEl = document.getElementById('grid');
   const overlayEl = document.getElementById('overlay');
   const scoreEl = document.getElementById('score');
@@ -917,6 +1255,8 @@ const hudStageEl = document.getElementById('hudStage');
   const btnNoob = document.getElementById('btnNoob');
   const btnEndless = document.getElementById('btnEndless');
   const btnNormal = document.getElementById('btnNormal');
+  const btnReset = document.getElementById('btnReset');
+  if(btnReset) btnReset.classList.add('danger');
 
 const endlessModal = document.getElementById('endlessModal');
 const endlessDesc = document.getElementById('endlessDesc');
@@ -999,6 +1339,10 @@ let nextWaitingPiece = null; // { kind, r, x, y } 仅用于显示，不参与碰
 
 let score=0, lines=0, level=1;
   let paused=false, gameOver=false;
+  // ===== Combo / Back-to-Back / Perfect Clear =====
+  let combo = 0;            // consecutive line-clears
+  let b2bEligible = false;  // last clear was a Tetris
+  let b2bStreak = 0;        // consecutive Tetris count;
   let gameOverPendingSave = false; // GAME OVER 弹总结，但还没写历史（给“继续游戏”留机会）
   // ===== Stats for summary =====
   let scoreBeforeGameOver = 0; // 记录触发 GAME OVER 那一刻的分数（给“继续游戏”用）
@@ -1020,11 +1364,61 @@ let endlessLocked = false; // 到 2000 分后只弹一次
 let mercyMultiplier = 1; // 1=正常，>1 越大越慢
 let clearing = false;
 let clearingRows = new Set(); // 记录正在消除的行
+let clearingCount = 0; // 本次消了几行（1-4），用于清行闪光强度
+// ===== Step 9: 主题色 + 当前模式按钮高亮 =====
+function setAccent(rgb){
+  document.documentElement.style.setProperty('--accent-rgb', rgb);
+}
+
+function setActiveModeButton(key){
+  const map = {
+    normal: btnNormal,
+    mercy: btnMercy,
+    pro: btnPro,
+    noob: btnNoob,
+    endless: btnEndless
+  };
+
+  Object.values(map).forEach(b => b && b.classList.remove('active'));
+  if(map[key]) map[key].classList.add('active');
+}
+
+function applyThemeByMode(){
+  if(mercyOn){
+    setAccent('34,197,94');     // 绿
+    setActiveModeButton('mercy');
+    return;
+  }
+  if(proMode){
+    setAccent('168,85,247');    // 紫
+    setActiveModeButton('pro');
+    return;
+  }
+  if(noobMode){
+    setAccent('34,197,94');     // 绿
+    setActiveModeButton('noob');
+    return;
+  }
+  if(endlessMode){
+    setAccent('239,68,68');     // 红
+    setActiveModeButton('endless');
+    return;
+  }
+
+  // 普通模式
+  setAccent('34,211,238');      // 青
+  setActiveModeButton('normal');
+}
   // ===== Toast helper =====
   const toastEl = document.getElementById('toast');
-  function showToast(msg){
+  function showToast(msg, tone){
     if(!toastEl) return;
     toastEl.textContent = msg;
+
+    // reset tone classes
+    toastEl.classList.remove('combo','b2b','pc','tetris');
+    if(tone) toastEl.classList.add(tone);
+
     toastEl.classList.remove('show');
     // 强制重启动画
     void toastEl.offsetWidth;
@@ -1050,7 +1444,7 @@ function winStage(){
   draw(); // 让全场方块开始播放 clearing 动画
 
   setTimeout(() => {
-    board = Array.from({length:H}, () => Array(W).fill(0));
+    board = Array.from({length:H}, () => Array(W).fill(null));
     clearingAll = false;
 
     paused = true;
@@ -1117,7 +1511,7 @@ function continueAfterGameOver(){
 
   // 为了能继续：清掉顶部 8 行，等于“撤回最后 8 个操作”，保证能生成新方块
 for(let y=0; y<8; y++){
-  for(let x=0; x<W; x++) board[y][x] = 0;
+  for(let x=0; x<W; x++) board[y][x] = null;
 }
 // ✅ 继续游戏：回到“撤回最后 8 次锁块之前”的分数（只回退分数，其他不变）
 const idx = Math.max(0, lockScoreHistory.length - 8);
@@ -1129,7 +1523,7 @@ nextWaitingPiece = null;
   spawn();
   if(gameOver){
     gameOver = false;
-    board = Array.from({length:H}, () => Array(W).fill(0));
+    board = Array.from({length:H}, () => Array(W).fill(null));
     bag = [];
     nextKind = null;
     spawn();
@@ -1236,7 +1630,7 @@ function fmtDateShort(ts){
 
 // 只重置棋盘/袋子/当前块，不动 stage/level/score/lines
 function resetBoardOnly(){
-  board = Array.from({length:H}, () => Array(W).fill(0));
+  board = Array.from({length:H}, () => Array(W).fill(null));
 
   piecesLocked = 0;
   hardDrops = 0;
@@ -1311,6 +1705,7 @@ function setFlagsByModeKey(k){
   }
 
   try{ pushModeTrail?.(); }catch(e){}
+  applyThemeByMode();
 }
 
 function applyModeWithRestart(k){
@@ -1735,7 +2130,19 @@ function maybeRevealNext(){
   if(piece.y >= 3){
     nextReveal = true;
     nextWaitingPiece = { kind: nextKind, r: 0, x: 3, y: 0 };
+    // (next-pop flash removed; now only flash on hard drop)
   }
+}
+
+// Flash the board ONLY for hard drop (Space / DROP)
+function flashHardDrop(){
+  const boardEl = document.querySelector('.board');
+  if(!boardEl) return;
+  boardEl.classList.remove('drop-pop');
+  // force reflow to restart animation
+  void boardEl.offsetWidth;
+  boardEl.classList.add('drop-pop');
+  setTimeout(() => boardEl.classList.remove('drop-pop'), 280);
 }
 
   function lock(){
@@ -1743,14 +2150,29 @@ function maybeRevealNext(){
     // 记录锁块前分数（硬降/软降加分已计入），用于“继续游戏”回退
 lockScoreHistory.push(score);
 if(lockScoreHistory.length > 80) lockScoreHistory.shift();
-  for(const [cy,cx] of rotations[piece.kind][piece.r]){
-    board[piece.y+cy][piece.x+cx] = 1;
+    for(const [cy,cx] of rotations[piece.kind][piece.r]){
+      board[piece.y+cy][piece.x+cx] = piece.kind;
+    }
+    const didClear = clearLines();
+    if(!didClear){
+      // no line clear -> combo breaks
+      combo = 0;
+      spawn(); // 没消除才立刻出下一块
+    }
   }
-  const didClear = clearLines();
-  if(!didClear) spawn(); // 没消除才立刻出下一块
+function kindToRgb(k){
+  if(k === 'I') return '34,211,238';
+  if(k === 'O') return '250,204,21';
+  if(k === 'T') return '168,85,247';
+  if(k === 'S') return '34,197,94';
+  if(k === 'Z') return '239,68,68';
+  if(k === 'J') return '59,130,246';
+  if(k === 'L') return '249,115,22';
+  return '255,255,255';
 }
-// 粒子爆散效果
-function spawnParticlesForRow(rowY){
+
+// 粒子爆散效果（按每格颜色）
+function spawnParticlesForRow(rowY, kinds){
   const boardEl = document.querySelector('.board');
   if(!boardEl) return;
 
@@ -1758,6 +2180,9 @@ function spawnParticlesForRow(rowY){
   const cellSize = rect.width / 10;
 
   for(let x = 0; x < 10; x++){
+    const k = (Array.isArray(kinds) && kinds[x]) ? kinds[x] : null;
+    const rgb = kindToRgb(k);
+
     for(let i = 0; i < 4; i++){
       const p = document.createElement('div');
       p.className = 'particle';
@@ -1772,6 +2197,7 @@ function spawnParticlesForRow(rowY){
       p.style.top  = py + 'px';
       p.style.setProperty('--dx', dx + 'px');
       p.style.setProperty('--dy', dy + 'px');
+      p.style.setProperty('--prgb', rgb);
 
       boardEl.appendChild(p);
       setTimeout(() => p.remove(), 500);
@@ -1780,53 +2206,87 @@ function spawnParticlesForRow(rowY){
 }
 
   function clearLines(){
-  // 找出满行
-  const full = [];
-  for(let y=0;y<H;y++){
-    let ok = true;
-    for(let x=0;x<W;x++){
-      if(!board[y][x]) { ok = false; break; }
+    // 找出满行
+    const full = [];
+    for(let y=0;y<H;y++){
+      let ok = true;
+      for(let x=0;x<W;x++){
+        if(!board[y][x]) { ok = false; break; }
+      }
+      if(ok) full.push(y);
     }
-    if(ok) full.push(y);
+
+    if(full.length === 0) return false;
+
+    // 进入消除动画状态
+    clearing = true;
+    clearingRows = new Set(full);
+    clearingCount = full.length;
+    // === Step 6: snapshot row kinds before animation removes them ===
+    const clearKinds = full.map(y => board[y].slice());
+
+    // 播放动画一小段时间后，再真正删除行
+    setTimeout(() => {
+      // 粒子爆散效果（按每格颜色）
+      for(let i = 0; i < full.length; i++){
+        spawnParticlesForRow(full[i], clearKinds[i]);
+      }
+      // 删除满行
+      board = board.filter((_, y) => !clearingRows.has(y));
+      while(board.length < H) board.unshift(Array(W).fill(null));
+      if(noobMode){
+        applyNoobGravity();
+      }
+
+      // 计分/升级
+      const cleared = full.length;
+
+      // ===== COMBO =====
+      combo = (combo || 0) + 1;
+      if(combo >= 2){
+        showToast(`COMBO x${combo}`, 'combo');
+      }
+
+      // ===== Back-to-Back (Tetris only) =====
+      if(cleared === 4){
+        if(b2bEligible){
+          b2bStreak = (b2bStreak || 1) + 1;
+        }else{
+          b2bStreak = 1;
+        }
+        b2bEligible = true;
+        if(b2bStreak >= 2) showToast(`B2B x${b2bStreak}`, 'b2b');
+        else showToast('TETRIS!', 'tetris');
+      }else{
+        b2bEligible = false;
+        b2bStreak = 0;
+      }
+
+      lines += cleared;
+      score += (lineScore[cleared] || 0) * level;
+      if(proMode) level = 1 + Math.floor(lines/2);
+
+      // ===== PERFECT CLEAR =====
+      const isPerfectClear = board.every(row => row.every(v => !v));
+      if(isPerfectClear){
+        showToast('PERFECT CLEAR', 'pc');
+        // Perfect clear also feels like a combo highlight; keep combo as-is
+      }
+
+      updateHUD();
+      checkStage();
+
+      // 退出消除状态
+      clearing = false;
+      clearingRows = new Set();
+      clearingCount = 0;
+
+      // 继续生成下一块（重要：这里再 spawn）
+      spawn();
+    }, 280); // 和 CSS 动画时间匹配（.28s）
+
+    return true;
   }
-
-  if(full.length === 0) return false;
-
-  // 进入消除动画状态
-  clearing = true;
-  clearingRows = new Set(full);
-
-  // 播放动画一小段时间后，再真正删除行
-  setTimeout(() => {
-    // 粒子爆散效果
-for(const y of clearingRows){
-  spawnParticlesForRow(y);
-}
-    // 删除满行
-    board = board.filter((_, y) => !clearingRows.has(y));
-    while(board.length < H) board.unshift(Array(W).fill(0));
-    if(noobMode){
-  applyNoobGravity();
-}
-
-    // 计分/升级
-    const cleared = full.length;
-    lines += cleared;
-    score += (lineScore[cleared] || 0) * level;
-    if(proMode) level = 1 + Math.floor(lines/2);
-    updateHUD();
-    checkStage();
-
-    // 退出消除状态
-    clearing = false;
-    clearingRows = new Set();
-
-    // 继续生成下一块（重要：这里再 spawn）
-    spawn();
-  }, 280); // 和 CSS 动画时间匹配（.28s）
-
-  return true;
-}
 function applyNoobGravity(){
   // 每一列把方块“压实”到最底下（像沙子一样直落）
   for(let x=0; x<W; x++){
@@ -1834,8 +2294,8 @@ function applyNoobGravity(){
     for(let y = H - 1; y >= 0; y--){
       if(board[y][x]){
         if(y !== writeY){
-          board[writeY][x] = 1;
-          board[y][x] = 0;
+          board[writeY][x] = board[y][x];
+          board[y][x] = null;
         }
         writeY--;
       }
@@ -1853,11 +2313,12 @@ function applyNoobGravity(){
     const gy = ghostY();
     score += Math.max(0, gy - piece.y) * 2;
     piece.y = gy;
-updateHUD();
-checkStage();
-checkEndlessCap();
-maybeRevealNext();
-lock();
+    updateHUD();
+    checkStage();
+    checkEndlessCap();
+    maybeRevealNext();
+    lock();
+    flashHardDrop();
   }
 
   function stageTargetFor(s){
@@ -1891,12 +2352,17 @@ function updateHUD(){
 
     // settled
     // settled
-for(let y=0;y<H;y++){
+    for(let y=0;y<H;y++){
   for(let x=0;x<W;x++){
-    if(board[y][x]){
+    const v = board[y][x]; // "I"..."L" or null
+    if(v){
       const idx = y*W+x;
       cells[idx].classList.add('filled');
-      if(clearingAll || clearingRows.has(y)) cells[idx].classList.add('clearing');
+      cells[idx].classList.add('kind-' + v);
+      if(clearingAll || clearingRows.has(y)){
+        cells[idx].classList.add('clearing');
+        if(clearingCount >= 1 && clearingCount <= 4) cells[idx].classList.add('clear-' + clearingCount);
+      }
     }
   }
 }
@@ -1910,7 +2376,11 @@ if(nextReveal && nextWaitingPiece){
     const y = nextWaitingPiece.y + cy;
     const x = nextWaitingPiece.x + cx;
     if(y >= 0 && y < H && x >= 0 && x < W){
-      if(!board[y][x]) cells[y*W+x].classList.add('next');
+      if(!board[y][x]){
+  const cell = cells[y*W+x];
+  cell.classList.add('next');
+  cell.classList.add('kind-' + nextWaitingPiece.kind);
+}
     }
   }
 }
@@ -1919,13 +2389,18 @@ if(nextReveal && nextWaitingPiece){
       for(const [cy,cx] of rotations[piece.kind][piece.r]){
         const y = gy+cy, x = piece.x+cx;
         const idx = y*W+x;
-        if(!board[y][x]) cells[idx].classList.add('ghost');
+        if(!board[y][x]){
+          cells[idx].classList.add('ghost');
+          cells[idx].classList.add('kind-' + piece.kind);
+        }
       }
       // active
       for(const [cy,cx] of rotations[piece.kind][piece.r]){
-        const y = piece.y+cy, x = piece.x+cx;
-        cells[y*W+x].classList.add('filled');
-      }
+  const y = piece.y+cy, x = piece.x+cx;
+  const cell = cells[y*W+x];
+  cell.classList.add('filled');
+  cell.classList.add('kind-' + piece.kind);
+}
     }
   }
 
@@ -1937,7 +2412,7 @@ if(nextReveal && nextWaitingPiece){
   }
 
   function reset(){
-    board = Array.from({length:H}, () => Array(W).fill(0));
+    board = Array.from({length:H}, () => Array(W).fill(null));
     score=0; lines=0; level=1;
     piecesLocked = 0;
 hardDrops = 0;
@@ -2172,20 +2647,26 @@ function turnOffAllModes(){
   if(btnPro) btnPro.textContent = '大神模式 ⚡（慢慢变快）';
   if(btnNoob) btnNoob.textContent = '菜鸡模式 🐣（悬空自动落）';
   if(btnEndless) btnEndless.textContent = '无尽模式 ♾️（爽死你）';
+  applyThemeByMode();
 }
 btnNormal?.addEventListener('click', () => {
   requestModeChange('normal');
+  applyThemeByMode();
 });
+
 btnPro?.addEventListener('click', () => {
   requestModeChange('pro');
+  applyThemeByMode();
 });
 
 btnNoob?.addEventListener('click', () => {
   requestModeChange('noob');
+  applyThemeByMode();
 });
 
 btnEndless?.addEventListener('click', () => {
   requestModeChange('endless');
+  applyThemeByMode();
 });
 
 endlessContinue?.addEventListener('click', () => {
@@ -2227,7 +2708,7 @@ stageNext?.addEventListener('click', () => {
   level = 1;
   updateHUD();
 
-  board = Array.from({length:H}, () => Array(W).fill(0));
+  board = Array.from({length:H}, () => Array(W).fill(null));
   bag = [];
   nextKind = null;
   spawn();
@@ -2235,6 +2716,7 @@ stageNext?.addEventListener('click', () => {
 });
   // ===== Mercy Mode (放在 IIFE 里面) =====
   const btnMercy = document.getElementById('btnMercy');
+  applyThemeByMode();
   const mercyModal = document.getElementById('mercyModal');
   const mercyInput = document.getElementById('mercyInput');
   const mercyTip = document.getElementById('mercyTip');
@@ -2259,6 +2741,7 @@ stageNext?.addEventListener('click', () => {
     mercyMultiplier = on ? 3.5 : 1;
     btnMercy.textContent = on ? '求饶中 ✅（点取消）' : '求饶模式 🥺';
     pushModeTrail();
+    applyThemeByMode();
   }
   function tryEnableMercy(){
   const txt = (mercyInput.value || '').trim();
@@ -2288,12 +2771,13 @@ stageNext?.addEventListener('click', () => {
   }
 }
 
-  btnMercy.addEventListener('click', () => {
+btnMercy.addEventListener('click', () => {
   if(mercyOn){
     setMercy(false);
     return;
   }
   requestModeChange('mercy');
+  applyThemeByMode();
 });
 
   mercyCancel.addEventListener('click', closeMercy);
