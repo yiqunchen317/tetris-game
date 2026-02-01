@@ -847,6 +847,73 @@
         background .14s ease,
         box-shadow .14s ease;
     }
+    /* ===== In-board Settings button (under Pause) ===== */
+.settings-corner{
+  position: absolute;
+  top: 62px;            /* 在暂停按钮下面 */
+  right: 10px;
+  z-index: 7;
+
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  font-weight: 900;
+
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.16);
+  color: var(--text);
+
+  box-shadow:
+    0 14px 28px rgba(0,0,0,.30),
+    inset 0 1px 0 rgba(255,255,255,.14);
+  backdrop-filter: blur(8px);
+  -webkit-tap-highlight-color: transparent;
+
+  cursor: pointer;
+  transition:
+    transform .12s ease,
+    filter .14s ease,
+    border-color .14s ease,
+    background .14s ease,
+    box-shadow .14s ease;
+}
+
+.settings-corner:hover{
+  filter: brightness(1.08);
+  border-color: rgba(var(--accent-rgb), .40);
+  background: rgba(255,255,255,.12);
+  transform: translateY(-1px);
+  box-shadow:
+    0 16px 34px rgba(0,0,0,.34),
+    inset 0 1px 0 rgba(255,255,255,.16);
+}
+
+.settings-corner:active{
+  transform: translateY(0px) scale(.96);
+  filter: brightness(.96);
+  box-shadow:
+    0 10px 20px rgba(0,0,0,.28),
+    inset 0 1px 0 rgba(255,255,255,.10);
+}
+
+@media (max-width: 600px){
+  .settings-corner{
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    font-size: 19px;
+    top: 68px;
+  }
+}
+
+/* 主页面隐藏设置按钮 */
+.settings-corner.hidden{
+  display: none;
+}
 
     .pause-corner:hover{
       filter: brightness(1.08);
@@ -1223,6 +1290,9 @@ max-width: 560px;
   transition: opacity .22s ease, visibility 0s linear .22s;
 }
 
+/* Keep SFX joke modal above Settings modal */
+#sfxJoke{ z-index: 12000; }
+
 .modal.show{
   opacity: 1;
   visibility: visible;
@@ -1246,6 +1316,104 @@ max-width: 560px;
   padding: 14px;
   box-shadow: 0 18px 50px rgba(0,0,0,.45);
   backdrop-filter: blur(10px);
+}
+/* ===== Settings modal UI ===== */
+.settings-card{
+  width: min(420px, 92vw);
+  padding: 14px;
+}
+
+.settings-head{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.settings-close{
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.10);
+  color: var(--text);
+}
+
+.setting-item{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+.setting-label{
+  font-weight: 900;
+  letter-spacing: .4px;
+}
+
+/* iOS-like switch */
+.switch{
+  position: relative;
+  width: 56px;
+  height: 32px;
+  display: inline-block;
+  flex: 0 0 auto;
+}
+
+.switch input{
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch .slider{
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: rgba(148,163,184,.40); /* off: gray */
+  border: 1px solid rgba(255,255,255,.14);
+  box-shadow: inset 0 2px 10px rgba(0,0,0,.25);
+  transition: background .18s ease, border-color .18s ease;
+  cursor: pointer;
+}
+
+.switch .slider::before{
+  content: "";
+  position: absolute;
+  height: 26px;
+  width: 26px;
+  left: 3px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background: rgba(255,255,255,.92);
+  box-shadow: 0 10px 18px rgba(0,0,0,.35);
+  transition: transform .18s ease;
+}
+
+/* ON state */
+.switch input:checked + .slider{
+  background: rgba(34,197,94,.72); /* on: green */
+  border-color: rgba(34,197,94,.75);
+}
+
+.switch input:checked + .slider::before{
+  transform: translate(24px, -50%);
+}
+
+/* focus outline (keyboard) */
+.switch input:focus-visible + .slider{
+  outline: 2px solid rgba(var(--accent-rgb), .55);
+  outline-offset: 2px;
 }
 
     .modal.show .modal-card{
@@ -1622,6 +1790,8 @@ color: rgba(229,231,235,.62);
 
       <!-- ✅ In-board Pause button (visual only for now) -->
       <button id="pauseCorner" class="pause-corner hidden" aria-label="pause">⏸</button>
+      <!-- ✅ In-board Settings button (under Pause) -->
+<button id="settingsCorner" class="settings-corner hidden" aria-label="settings">⚙</button>
 
       <!-- Faded HUD inside the board -->
 <div class="hud" aria-hidden="true">
@@ -1830,6 +2000,46 @@ color: rgba(229,231,235,.62);
     <button id="pauseSettings" class="btn ghost">设置 / 控制 🎛</button>
   </div>
 </div>
+<!-- ✅ Settings modal (empty for now) -->
+<div id="settingsModal" class="modal" aria-hidden="true">
+  <div class="modal-card settings-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="settings-head">
+      <div class="modal-title" id="settingsTitle">设置</div>
+      <button id="settingsClose" class="settings-close" aria-label="close">✕</button>
+    </div>
+
+    <div class="setting-item">
+      <div class="setting-label">丝滑模式</div>
+
+      <label class="switch" aria-label="smooth mode">
+        <input id="smoothToggle" type="checkbox" />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="setting-item">
+      <div class="setting-label">音效</div>
+
+      <label class="switch" aria-label="sound effects">
+        <input id="sfxToggle" type="checkbox" />
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+</div>
+<!-- 😈 SFX joke modal (centered, NOT system alert) -->
+<div id="sfxJoke" class="modal" aria-hidden="true">
+  <div class="modal-card" style="width:min(340px,88vw); text-align:center"
+       role="dialog" aria-modal="true" aria-labelledby="sfxJokeTitle">
+    <div class="modal-title" id="sfxJokeTitle">😂 音效已打开</div>
+    <div class="modal-desc" style="text-align:center">
+      打开也没有用<br/>因为我还没写音效 🤡
+    </div>
+    <div class="modal-actions" style="justify-content:center">
+      <button id="sfxJokeOk" class="modal-btn">我知道了</button>
+    </div>
+  </div>
+</div>
 <script>
 (() => {
     // ===== Splash control =====
@@ -1878,15 +2088,155 @@ const pauseContinue = document.getElementById('pauseContinue');
 const pauseRestart = document.getElementById('pauseRestart');
 const pauseSettings = document.getElementById('pauseSettings');
 const pauseHome = document.getElementById('pauseHome');
+
 const pauseCorner = document.getElementById('pauseCorner');
+const settingsCorner = document.getElementById('settingsCorner');
+
+const settingsModal = document.getElementById('settingsModal');
+const smoothToggle = document.getElementById('smoothToggle');
+const sfxToggle = document.getElementById('sfxToggle');
+const settingsClose = document.getElementById('settingsClose');
+
+const sfxJoke = document.getElementById('sfxJoke');
+const sfxJokeOk = document.getElementById('sfxJokeOk');
+
+// Persisted settings
+const SMOOTH_KEY = 'tetris_smooth_mode_v1';
+const SFX_KEY    = 'tetris_sfx_on_v1';
+
+let smoothMode = false;
+let sfxOn = true; // 只做开关UI与保存，暂不接入音效逻辑
+try{ smoothMode = localStorage.getItem(SMOOTH_KEY) === '1'; }catch(e){}
+try{ sfxOn = localStorage.getItem(SFX_KEY) !== '0'; }catch(e){}
+
+function applySmoothModeUI(){
+  if(smoothToggle) smoothToggle.checked = !!smoothMode;
+  if(sfxToggle) sfxToggle.checked = !!sfxOn;
+  // 留个 class，后面做“丝滑下落”动画会用到
+  document.documentElement.classList.toggle('smooth-on', !!smoothMode);
+}
+applySmoothModeUI();
+// ===== Smooth falling (visual) =====
+// 逻辑仍然一格一格掉落；丝滑模式只改变“视觉呈现”为连续匀速
+let smoothLastStepAt = performance.now();
+
+// 当前重力间隔（ms），用于算动画进度；后面会在重力计算处更新它
+let gravityIntervalMs = 520;
+function setGravityIntervalMs(ms){
+  gravityIntervalMs = Math.max(60, ms|0);
+}
+
+function readCSSPxVar(name, fallback){
+  try{
+    const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    const n = parseFloat(v);
+    return Number.isFinite(n) ? n : fallback;
+  }catch(e){
+    return fallback;
+  }
+}
+
+// 一格的像素距离 = cell + gap
+function cellStepPx(){
+  const cell = readCSSPxVar('--cell', 28);
+  const gap  = readCSSPxVar('--gap', 2);
+  return cell + gap;
+}
+
+// 进度 0~1：从“刚掉下一格那一刻”到“下一次该掉的一刻”
+function smoothProgress(){
+  if(!smoothMode) return 0;
+  const dt = performance.now() - smoothLastStepAt;
+  const p = dt / gravityIntervalMs;
+  return Math.max(0, Math.min(1, p));
+}
+
+smoothToggle?.addEventListener('change', () => {
+  smoothMode = !!smoothToggle.checked;
+  try{ localStorage.setItem(SMOOTH_KEY, smoothMode ? '1' : '0'); }catch(e){}
+  applySmoothModeUI();
+});
+
+sfxToggle?.addEventListener('change', () => {
+  sfxOn = !!sfxToggle.checked;
+  try{ localStorage.setItem(SFX_KEY, sfxOn ? '1' : '0'); }catch(e){}
+  applySmoothModeUI();
+
+  // 😈 居中搞怪弹窗（不要系统提示）
+  if(sfxOn && sfxJoke){
+    sfxJoke.classList.add('show');
+    sfxJoke.setAttribute('aria-hidden','false');
+  }
+});
+
+function closeSfxJoke(){
+  if(!sfxJoke) return;
+  sfxJoke.classList.remove('show');
+  sfxJoke.setAttribute('aria-hidden','true');
+}
+
+sfxJokeOk?.addEventListener('click', closeSfxJoke);
+
+// 点击遮罩关闭
+sfxJoke?.addEventListener('click', (e) => {
+  if(e.target === sfxJoke) closeSfxJoke();
+});
+
+// 关闭设置页
+settingsClose?.addEventListener('click', () => {
+  closeSettingsModal();
+  if(started && !gameOver && !pauseModal?.classList.contains('show')){
+    paused = false;
+    overlayEl?.classList.remove('show');
+  }
+});
+
 function showPauseButton(){
   pauseCorner?.classList.remove('hidden');
+  settingsCorner?.classList.remove('hidden');
 }
 
 function hidePauseButton(){
   pauseCorner?.classList.add('hidden');
+  settingsCorner?.classList.add('hidden');
 }
 hidePauseButton();
+
+// ===== Settings modal open/close (empty for now) =====
+function openSettingsModal(){
+  if(!settingsModal) return;
+  paused = true;
+  overlayEl?.classList.remove('show');
+  settingsModal.classList.add('show');
+  settingsModal.setAttribute('aria-hidden','false');
+  applySmoothModeUI();
+}
+
+function closeSettingsModal(){
+  if(!settingsModal) return;
+  settingsModal.classList.remove('show');
+  settingsModal.setAttribute('aria-hidden','true');
+}
+
+// Click backdrop to close (only when clicking the dark area)
+settingsModal?.addEventListener('click', (e) => {
+  if(e.target === settingsModal){
+    closeSettingsModal();
+    // resume if not in pause modal and game is running
+    if(started && !gameOver && !pauseModal?.classList.contains('show')){
+      paused = false;
+      overlayEl?.classList.remove('show');
+    }
+  }
+});
+
+// 点齿轮：打开【空设置页】
+settingsCorner?.addEventListener('click', () => {
+  if(!started) return;
+  // 先关暂停页（如果开着）
+  try{ closePauseModal?.(); }catch(e){}
+  openSettingsModal();
+});
 
   // ===== Return to "Home" (start screen) =====
   function goHomeScreen(){
@@ -2308,6 +2658,7 @@ function closeSummaryModal(){
 }
 function openPauseModal(){
   if(!pauseModal) return;
+  try{ closeSettingsModal?.(); }catch(e){}
   paused = true;
   overlayEl?.classList.add('show');
   pauseModal.classList.add('show');
@@ -2318,7 +2669,14 @@ function closePauseModal(){
   if(!pauseModal) return;
   pauseModal.classList.remove('show');
   pauseModal.setAttribute('aria-hidden','true');
+  // do not touch settings modal here
 }
+
+pauseSettings?.addEventListener('click', () => {
+  // 从暂停页进入设置页
+  try{ closePauseModal?.(); }catch(e){}
+  openSettingsModal();
+});
 function continueAfterGameOver(){
   summaryShown = false;
   if(!gameOver) return;
@@ -2998,22 +3356,23 @@ function checkEndlessCap(){
     nextKind = bag.pop();
 
     nextReveal = false;
-nextWaitingPiece = null;
+    nextWaitingPiece = null;
 
     piece = { kind, r:0, x:3, y:0 };
+    smoothLastStepAt = performance.now();
     if(!canPlace(piece, 0, 0, 0)) {
       gameOver = true;
       scoreBeforeGameOver = score;
       overlayEl.textContent = "GAME OVER (R)";
       overlayEl.classList.add('show');
       showToast("菜就多练");
-setTimeout(() => {
-  if(gameOver){
-    gameOverPendingSave = true;
-    summaryShown = true;
-    openSummaryModal();
-  }
-}, 1350);
+      setTimeout(() => {
+        if(gameOver){
+          gameOverPendingSave = true;
+          summaryShown = true;
+          openSummaryModal();
+        }
+      }, 1350);
     }
   }
 
@@ -3618,13 +3977,15 @@ function updateHUD(){
   if(hudStageEl) hudStageEl.textContent = stage;
 }
 
-  function draw(){
-    if(phraseClearActive) return;
-    // reset all
-    for(const c of cells){ c.className = 'cell'; }
+function draw(){
+  if(phraseClearActive) return;
 
-    // settled
-    // settled
+  // reset all
+  for(const c of cells){
+    c.className = 'cell';
+    c.style.transform = ''; // ✅ 每帧清掉，再给当前块重新加
+    c.style.zIndex = '';
+  }
     for(let y=0;y<H;y++){
   for(let x=0;x<W;x++){
     const v = board[y][x]; // "I"..."L" or null
@@ -3682,8 +4043,10 @@ if(nextReveal && nextWaitingPiece){
       // ghost
       const gy = ghostY();
       for(const [cy,cx] of rotations[piece.kind][piece.r]){
-        const y = gy+cy, x = piece.x+cx;
-        const idx = y*W+x;
+        const y = gy + cy;
+        const x = piece.x + cx;
+        if(y < 0 || y >= H || x < 0 || x >= W) continue;
+        const idx = y*W + x;
         if(!board[y][x]){
           cells[idx].classList.add('ghost');
           cells[idx].classList.add('kind-' + piece.kind);
@@ -3691,11 +4054,22 @@ if(nextReveal && nextWaitingPiece){
       }
       // active
       for(const [cy,cx] of rotations[piece.kind][piece.r]){
-  const y = piece.y+cy, x = piece.x+cx;
-  const cell = cells[y*W+x];
-  cell.classList.add('filled');
-  cell.classList.add('kind-' + piece.kind);
-}
+        const y = piece.y + cy;
+        const x = piece.x + cx;
+        if(y < 0 || y >= H || x < 0 || x >= W) continue;
+
+        const idx = y*W + x;
+        const cell = cells[idx];
+        cell.classList.add('filled');
+        cell.classList.add('kind-' + piece.kind);
+        cell.style.zIndex = '2';
+
+        // ✅ Smooth mode: visual continuous fall (gameplay stays grid-based)
+        if(smoothMode && !paused && !gameOver && !clearing && !clearingAll && !stageCleared){
+          const p = smoothProgress();
+          cell.style.transform = `translateY(${(p * cellStepPx()).toFixed(2)}px)`;
+        }
+      }
     }
   }
 
@@ -3745,8 +4119,8 @@ paused=false; gameOver=false;
   if(!clearing){
     acc += dt;
     const baseInterval = proMode
-  ? Math.max(0.08, 0.4 - (level-1)*0.015)   // 你原来的机制
-  : stageIntervalFor(stage);                 // 关卡固定速度
+      ? Math.max(0.08, 0.4 - (level-1)*0.015)   // 你原来的机制
+      : stageIntervalFor(stage);                 // 关卡固定速度
 
     const nowMs = Date.now();
     const slowFactor = (nowMs < slowMoUntil) ? slowMoFactor : 1;
@@ -3755,10 +4129,20 @@ paused=false; gameOver=false;
     // Ice piece falls slower
     if(piece && piece.kind === 'C') interval *= 1.45;
 
+    // keep smooth animation aligned with current gravity speed
+    setGravityIntervalMs(interval * 1000);
+
     if(acc >= interval){
       acc = 0;
-      if(canPlace(piece,0,1,0)) piece.y += 1;
-      else lock();
+      if(canPlace(piece,0,1,0)){
+        piece.y += 1;
+        // anchor smooth animation at the exact moment gravity advances 1 row
+        smoothLastStepAt = performance.now();
+      }else{
+        lock();
+        // after lock+spawn, reset anchor so the new piece doesn't start mid-fall
+        smoothLastStepAt = performance.now();
+      }
     }
   }
   maybeRevealNext();
