@@ -356,7 +356,76 @@
     0 0 16px rgba(140,200,255,.22);
 }
 
-/* ===== Energy block (E) ===== */
+    /* ===== 1x1 Text blocks (pretty) ===== */
+.cell.filled.kind-A,
+.cell.filled.kind-Q,
+.cell.filled.kind-X,
+.cell.filled.kind-P,
+.cell.filled.kind-K{
+  position: relative;
+  border: 1px solid rgba(255,255,255,.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.20),
+    inset 0 -12px 22px rgba(0,0,0,.22),
+    0 0 14px rgba(255,255,255,.10);
+  overflow: hidden;
+}
+
+/* subtle “paper + neon” feels */
+.cell.filled.kind-A{ /* 天 */
+  background:
+    radial-gradient(120% 120% at 30% 18%, rgba(255,255,255,.28), rgba(255,255,255,0) 58%),
+    linear-gradient(135deg, rgba(56,189,248,.58), rgba(14,165,233,.16));
+}
+.cell.filled.kind-Q{ /* 晴 */
+  background:
+    radial-gradient(120% 120% at 30% 18%, rgba(255,255,255,.28), rgba(255,255,255,0) 58%),
+    linear-gradient(135deg, rgba(250,204,21,.58), rgba(202,138,4,.18));
+}
+.cell.filled.kind-X{ /* 小 */
+  background:
+    radial-gradient(120% 120% at 30% 18%, rgba(255,255,255,.28), rgba(255,255,255,0) 58%),
+    linear-gradient(135deg, rgba(168,85,247,.56), rgba(126,34,206,.16));
+}
+.cell.filled.kind-P{ /* 宝 */
+  background:
+    radial-gradient(120% 120% at 30% 18%, rgba(255,255,255,.28), rgba(255,255,255,0) 58%),
+    linear-gradient(135deg, rgba(34,197,94,.56), rgba(22,163,74,.16));
+}
+.cell.filled.kind-K{ /* 贝 */
+  background:
+    radial-gradient(120% 120% at 30% 18%, rgba(255,255,255,.28), rgba(255,255,255,0) 58%),
+    linear-gradient(135deg, rgba(244,63,94,.54), rgba(190,18,60,.16));
+}
+
+/* the character */
+.cell.filled.kind-A::after,
+.cell.filled.kind-Q::after,
+.cell.filled.kind-X::after,
+.cell.filled.kind-P::after,
+.cell.filled.kind-K::after{
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-weight: 950;
+  font-size: 15px;
+  letter-spacing: .5px;
+  color: rgba(255,255,255,.92);
+  text-shadow:
+    0 0 10px rgba(255,255,255,.22),
+    0 10px 18px rgba(0,0,0,.40);
+  opacity: .92;
+  pointer-events: none;
+}
+
+.cell.filled.kind-A::after{ content: "天"; }
+.cell.filled.kind-Q::after{ content: "晴"; }
+.cell.filled.kind-X::after{ content: "小"; }
+.cell.filled.kind-P::after{ content: "宝"; }
+.cell.filled.kind-K::after{ content: "贝"; }
+
+    /* ===== Energy block (E) ===== */
 .cell.filled.kind-E{
   position: relative;
   background:
@@ -584,7 +653,12 @@
 .cell.ghost.kind-Z{ border-color: rgba(239,68,68,.30); box-shadow: inset 0 0 0 2px rgba(239,68,68,.26), 0 0 10px rgba(239,68,68,.06); }
 .cell.ghost.kind-J{ border-color: rgba(59,130,246,.30); box-shadow: inset 0 0 0 2px rgba(59,130,246,.26), 0 0 10px rgba(59,130,246,.06); }
 .cell.ghost.kind-L{ border-color: rgba(249,115,22,.30); box-shadow: inset 0 0 0 2px rgba(249,115,22,.26), 0 0 10px rgba(249,115,22,.06); }
-.cell.ghost.kind-E{ border-color: rgba(168,85,247,.34); box-shadow: inset 0 0 0 2px rgba(168,85,247,.26), 0 0 10px rgba(168,85,247,.08); }
+    .cell.ghost.kind-E{ border-color: rgba(168,85,247,.34); box-shadow: inset 0 0 0 2px rgba(168,85,247,.26), 0 0 10px rgba(168,85,247,.08); }
+.cell.ghost.kind-A{ border-color: rgba(56,189,248,.34); box-shadow: inset 0 0 0 2px rgba(56,189,248,.26), 0 0 10px rgba(56,189,248,.08); }
+.cell.ghost.kind-Q{ border-color: rgba(250,204,21,.34); box-shadow: inset 0 0 0 2px rgba(250,204,21,.26), 0 0 10px rgba(250,204,21,.08); }
+.cell.ghost.kind-X{ border-color: rgba(168,85,247,.34); box-shadow: inset 0 0 0 2px rgba(168,85,247,.26), 0 0 10px rgba(168,85,247,.08); }
+.cell.ghost.kind-P{ border-color: rgba(34,197,94,.32); box-shadow: inset 0 0 0 2px rgba(34,197,94,.26), 0 0 10px rgba(34,197,94,.07); }
+.cell.ghost.kind-K{ border-color: rgba(244,63,94,.32); box-shadow: inset 0 0 0 2px rgba(244,63,94,.26), 0 0 10px rgba(244,63,94,.07); }
     .cell.next{
   border:none;
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.10);
@@ -601,6 +675,11 @@
     .cell.next.kind-J{ background: linear-gradient(135deg, rgba(59,130,246,.20), rgba(59,130,246,.06)); }
     .cell.next.kind-L{ background: linear-gradient(135deg, rgba(249,115,22,.20), rgba(249,115,22,.06)); }
     .cell.next.kind-E{ background: linear-gradient(135deg, rgba(168,85,247,.22), rgba(168,85,247,.06)); }
+    .cell.next.kind-A{ background: linear-gradient(135deg, rgba(56,189,248,.22), rgba(56,189,248,.06)); }
+    .cell.next.kind-Q{ background: linear-gradient(135deg, rgba(250,204,21,.22), rgba(250,204,21,.06)); }
+    .cell.next.kind-X{ background: linear-gradient(135deg, rgba(168,85,247,.22), rgba(168,85,247,.06)); }
+    .cell.next.kind-P{ background: linear-gradient(135deg, rgba(34,197,94,.20), rgba(34,197,94,.06)); }
+    .cell.next.kind-K{ background: linear-gradient(135deg, rgba(244,63,94,.20), rgba(244,63,94,.06)); }
 
     .side{
       display:flex;
@@ -1370,6 +1449,29 @@ max-width: 560px;
   transform-origin: center;
   animation-delay: var(--ad, 0ms);
 }
+/* ===== Phrase clear (天晴小宝贝) stronger effect ===== */
+.board.phrase-pop{
+  animation: phrasePop .42s ease-out;
+}
+@keyframes phrasePop{
+  0%{ filter: brightness(1.0); box-shadow: 0 0 0 0 rgba(var(--accent-rgb), 0); }
+  35%{ filter: brightness(1.15); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .22), 0 0 36px rgba(var(--accent-rgb), .22); }
+  100%{ filter: brightness(1.0); box-shadow: 0 0 0 0 rgba(var(--accent-rgb), 0); }
+}
+
+.cell.phrase-clearing{
+  animation: phraseShatter .32s cubic-bezier(.2,.8,.2,1) forwards;
+  transform-origin: center;
+  animation-delay: var(--ad, 0ms);
+  will-change: transform, opacity, filter;
+}
+
+@keyframes phraseShatter{
+  0%   { transform: scale(1);    opacity: 1;   filter: brightness(1.05) saturate(1.05); }
+  22%  { transform: scale(1.28) rotate(-3deg); opacity: 1;   filter: brightness(1.45) saturate(1.15); }
+  65%  { transform: scale(.88) rotate(6deg);  opacity: .45; filter: brightness(1.15) saturate(1.05) blur(.6px); }
+  100% { transform: scale(.52) rotate(12deg); opacity: 0;   filter: brightness(1.05) blur(1.4px); }
+}
 /* ===== Glass-only clear effect (visual-only) ===== */
 .cell.clearing.kind-G{
   animation: glassShatter var(--clear-dur, .34s) cubic-bezier(.2,.8,.2,1) forwards;
@@ -1785,6 +1887,67 @@ function hidePauseButton(){
   pauseCorner?.classList.add('hidden');
 }
 hidePauseButton();
+
+  // ===== Return to "Home" (start screen) =====
+  function goHomeScreen(){
+    // close pause modal if open
+    try{ closePauseModal?.(); }catch(e){}
+
+    // stop gameplay state
+    paused = false;
+    gameOver = false;
+    stageCleared = false;
+    clearingAll = false;
+    clearing = false;
+    clearingRows = new Set();
+    clearingCount = 0;
+
+    // reset score/level/stage HUD to initial look
+    score = 0;
+    lines = 0;
+    level = 1;
+    stage = 1;
+    stageTarget = stageTargetFor ? stageTargetFor(stage) : 500;
+
+    // reset per-run stats
+    piecesLocked = 0;
+    hardDrops = 0;
+    softDrops = 0;
+    gameStartAt = 0;
+    summaryShown = false;
+    gameOverPendingSave = false;
+    savedThisGame = false;
+    lockScoreHistory = [];
+
+    // clear special-preview/slowmo state
+    nextReveal = false;
+    nextWaitingPiece = null;
+    slowMoUntil = 0;
+    slowMoFactor = 1;
+    energyClearActive = false;
+
+    // clear board + piece/bag so the grid renders empty
+    board = Array.from({length:H}, () => Array(W).fill(null));
+    bag = [];
+    nextKind = null;
+    piece = null;
+
+    // hide overlays/modals text
+    overlayEl?.classList.remove('show');
+    if(overlayEl) overlayEl.textContent = "";
+
+    // show start screen, hide pause corner
+    started = false;
+    startScreen?.classList.add('show');
+    hidePauseButton();
+
+    // refresh HUD + redraw empty grid
+    try{ updateHUD?.(); }catch(e){}
+    try{ draw?.(); }catch(e){}
+
+    // keep start screen mode label synced
+    try{ updateStartModeLabel?.(); }catch(e){}
+  }
   const stageModal = document.getElementById('stageModal');
   const stageDesc = document.getElementById('stageDesc');
   const stageNext = document.getElementById('stageNext');
@@ -1820,8 +1983,15 @@ hidePauseButton();
     M: [[0,1,1,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]],
     B: [[0,1,1,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]],
     C: [[0,1,1,0],[0,1,1,0],[0,0,0,0],[0,0,0,0]],
+
+    // 1×1 text blocks: 天晴小宝贝
+    A: [[0,0,0,0],[0,1,0,0],[0,0,0,0],[0,0,0,0]], // 天
+    Q: [[0,0,0,0],[0,1,0,0],[0,0,0,0],[0,0,0,0]], // 晴
+    X: [[0,0,0,0],[0,1,0,0],[0,0,0,0],[0,0,0,0]], // 小
+    P: [[0,0,0,0],[0,1,0,0],[0,0,0,0],[0,0,0,0]], // 宝
+    K: [[0,0,0,0],[0,1,0,0],[0,0,0,0],[0,0,0,0]], // 贝
   };
-  const ORDER = ["I","O","T","S","Z","J","L","G","E","M","B","C"];
+  const ORDER = ["I","O","T","S","Z","J","L","G","E","M","B","C","A","Q","X","P","K"];
 
   const rotCW = m => m[0].map((_,i) => m.map(r=>r[i]).reverse());
   const cellsOf = m => {
@@ -1852,7 +2022,8 @@ hidePauseButton();
       pool = [
         'I','I','I','I','I','I',
         'O','O','O','O',
-        'E' // ≈ 1/11 机会
+        // specials (same low weight style)
+        'E','A','Q','X','P','K'
       ];
     }else{
       // 普通/求饶/大神/菜鸡：常规 7 种形状占大头，特殊块很少出现
@@ -1871,7 +2042,9 @@ hidePauseButton();
         'O',
 
         // 特殊块：低权重（每袋各 1 次）
-        'G','E','M','B','C'
+        'G','E','M','B','C',
+        // 1×1 字块：天晴小宝贝（各 1 次）
+        'A','Q','X','P','K'
       ];
     }
     // Fisher–Yates shuffle
@@ -1920,6 +2093,95 @@ let clearingCount = 0; // 本次消了几行（1-4），用于清行闪光强度
 let slowMoUntil = 0;
 let slowMoFactor = 1;
 let energyClearActive = false;
+// ===== 1×1 phrase rule: 天晴小宝贝 => clear ALL (with animation) =====
+let phraseClearActive = false;
+const PHRASE_SEQ = ['A','Q','X','P','K']; // 天 晴 小 宝 贝
+const PHRASE_STAGGER_MS = 18;            // left→right, top→bottom wave
+
+function findPhraseInRows(){
+  for(let y=0; y<H; y++){
+    for(let x=0; x<=W-5; x++){
+      let ok = true;
+      for(let i=0;i<5;i++){
+        if(board[y][x+i] !== PHRASE_SEQ[i]){ ok = false; break; }
+      }
+      if(ok) return { y, x };
+    }
+  }
+  return null;
+}
+
+function triggerPhraseClearAll(){
+  if(phraseClearActive) return false;
+  const hit = findPhraseInRows();
+  if(!hit) return false;
+
+  phraseClearActive = true;
+
+  // freeze gameplay during animation
+  paused = true;
+  try{ closePauseModal?.(); }catch(e){}
+  overlayEl?.classList.remove('show');
+  if(overlayEl) overlayEl.textContent = "";
+
+  // ensure current board is rendered before shattering
+  try{ draw?.(); }catch(e){}
+  const boardEl = document.querySelector('.board');
+boardEl?.classList.remove('phrase-pop');
+void boardEl?.offsetWidth;
+boardEl?.classList.add('phrase-pop');
+  let lastDelay = 0;
+
+  // animate filled cells in a wave: left→right, top→bottom
+  for(let y=0; y<H; y++){
+    for(let x=0; x<W; x++){
+      const k = board[y][x];
+      if(!k) continue;
+
+      const idx = y*W + x;
+      const d = (y*W + x) * PHRASE_STAGGER_MS;
+      lastDelay = Math.max(lastDelay, d);
+
+      const el = cells[idx];
+      if(!el) continue;
+
+      // use existing shatter animation (.cell.clearing)
+      el.style.setProperty('--ad', d + 'ms');
+      el.classList.add('phrase-clearing','clear-4');
+    }
+  }
+
+  // after the wave finishes, truly clear the board and continue
+  const SAFE_END_MS = 140; // a bit larger than --clear-dur (.28s)
+  setTimeout(() => {
+    // clear board data
+    board = Array.from({length:H}, () => Array(W).fill(null));
+
+    // clean DOM animation classes
+    for(let i=0;i<cells.length;i++){
+      const el = cells[i];
+      el.classList.remove('phrase-clearing','clearing','clear-1','clear-2','clear-3','clear-4');
+      el.style.removeProperty('--ad');
+    }
+
+    // reset related state
+    clearing = false;
+    clearingRows = new Set();
+    clearingCount = 0;
+
+    nextReveal = false;
+    nextWaitingPiece = null;
+
+    phraseClearActive = false;
+    paused = false;
+
+    // continue game
+    spawn();
+    draw();
+  }, lastDelay + SAFE_END_MS);
+
+  return true;
+}
 // ===== Step 9: 主题色 + 当前模式按钮高亮 =====
 function setAccent(rgb){
   document.documentElement.style.setProperty('--accent-rgb', rgb);
@@ -2684,28 +2946,11 @@ pauseRestart?.addEventListener('click', () => {
   closePauseModal();
   paused = false;
   reset();
-  startGame();
 });
 
 // 🏠 回到主页面（开始界面）
 pauseHome?.addEventListener('click', () => {
-  closePauseModal();
-  paused = false;
-  gameOver = false;
-
-  // 清理棋盘和状态，但不强制选模式
-  board = Array.from({length:H}, () => Array(W).fill(null));
-  bag = [];
-  nextKind = null;
-  piece = null;
-
-  overlayEl?.classList.remove('show');
-  overlayEl.textContent = "";
-
-  // 显示开始界面
-  started = false;
-  startScreen?.classList.add('show');
-  hidePauseButton();
+  goHomeScreen(); // ✅ 回到“刚打开游戏”的干净状态
 });
 
 // 🎛 设置 / 控制（占位）
@@ -2817,6 +3062,11 @@ if(lockScoreHistory.length > 80) lockScoreHistory.shift();
     for(const [cy,cx] of rotations[piece.kind][piece.r]){
       board[piece.y+cy][piece.x+cx] = piece.kind;
     }
+      // ✅ 天晴小宝贝：只要在任意一行出现 A Q X P K 连在一起（不要求满行）=> 全屏清除动画
+  if(triggerPhraseClearAll()){
+    // 这次锁块不走普通消行逻辑
+    return;
+  }
     const didClear = clearLines();
     if(!didClear){
       // no line clear -> combo breaks
@@ -3369,6 +3619,7 @@ function updateHUD(){
 }
 
   function draw(){
+    if(phraseClearActive) return;
     // reset all
     for(const c of cells){ c.className = 'cell'; }
 
