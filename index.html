@@ -732,12 +732,80 @@
       transition: .15s;
     }
     .overlay.show{opacity:1}
+
+    /* ===== In-board Pause button (top-right) ===== */
+    .pause-corner{
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 7; /* above HUD (z=4) and below modals */
+
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      font-weight: 900;
+
+      /* transparent but obvious */
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.18);
+      color: var(--text);
+
+      box-shadow:
+        0 14px 28px rgba(0,0,0,.34),
+        inset 0 1px 0 rgba(255,255,255,.16);
+      backdrop-filter: blur(8px);
+      -webkit-tap-highlight-color: transparent;
+
+      cursor: pointer;
+      transition:
+        transform .12s ease,
+        filter .14s ease,
+        border-color .14s ease,
+        background .14s ease,
+        box-shadow .14s ease;
+    }
+
+    .pause-corner:hover{
+      filter: brightness(1.08);
+      border-color: rgba(var(--accent-rgb), .45);
+      background: rgba(255,255,255,.14);
+      transform: translateY(-1px);
+      box-shadow:
+        0 16px 34px rgba(0,0,0,.36),
+        inset 0 1px 0 rgba(255,255,255,.18);
+    }
+
+    .pause-corner:active{
+      transform: translateY(0px) scale(.96);
+      filter: brightness(.96);
+      box-shadow:
+        0 10px 20px rgba(0,0,0,.30),
+        inset 0 1px 0 rgba(255,255,255,.10);
+    }
+
+    /* phone: keep it slightly larger for touch */
+    @media (max-width: 600px){
+      .pause-corner{
+        width: 48px;
+        height: 48px;
+        border-radius: 16px;
+        font-size: 19px;
+      }
+    }
     @media (max-width: 860px){
       .wrap{grid-template-columns: 1fr; width:min(520px, 92vw)}
       .side{flex-direction:row; flex-wrap:wrap}
       .side .card{flex:1 1 220px}
       :root{--cell: 24px}
     }
+    /* 主页面隐藏暂停按钮 */
+.pause-corner.hidden{
+  display: none;
+}
 
     /* ===== Mobile touch controls ===== */
     .mctl{
@@ -1166,6 +1234,20 @@ max-width: 560px;
 .summary{
   margin-top: 8px;
 }
+/* ===== Pause Modal ===== */
+.pause-card{
+  width: min(86vw, 320px);
+  display: grid;
+  gap: 14px;
+  text-align: center;
+}
+
+.pause-title{
+  margin-bottom: 6px;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
 .summary .row{
   margin: 8px 0;
   font-size: 14px;
@@ -1435,6 +1517,10 @@ color: rgba(229,231,235,.62);
     <div class="board">
       <div id="grid" class="grid" aria-label="tetris grid"></div>
       <div id="overlay" class="overlay">PAUSED</div>
+
+      <!-- ✅ In-board Pause button (visual only for now) -->
+      <button id="pauseCorner" class="pause-corner hidden" aria-label="pause">⏸</button>
+
       <!-- Faded HUD inside the board -->
 <div class="hud" aria-hidden="true">
   <div class="hud-row"><span>Score</span><b id="hudScore">0</b></div>
@@ -1463,7 +1549,6 @@ color: rgba(229,231,235,.62);
 <button id="btnStartHistory" class="start-btn ghost">历史记录 🗂️</button>
 <!-- ✅ NEW END -->
 
-<div class="start-tip">键盘 / 手机按键都支持</div>
       <div class="start-tip">键盘 / 手机按键都支持</div>
     </div>
   </div>
@@ -1630,6 +1715,19 @@ color: rgba(229,231,235,.62);
     </div>
   </div>
 </div>
+<div id="modeResumeModal" class="modal">...</div>
+
+<!-- ✅ 在这里加 -->
+<div id="pauseModal" class="modal" aria-hidden="true">
+  <div class="modal-card pause-card">
+    <h2 class="pause-title">游戏暂停</h2>
+
+    <button id="pauseContinue" class="btn primary">继续游戏 ▶</button>
+    <button id="pauseRestart" class="btn">重新开始 ↻</button>
+    <button id="pauseHome" class="btn ghost">回到主页面 🏠</button>
+    <button id="pauseSettings" class="btn ghost">设置 / 控制 🎛</button>
+  </div>
+</div>
 <script>
 (() => {
     // ===== Splash control =====
@@ -1673,6 +1771,20 @@ const summaryBody  = document.getElementById('summaryBody');
 const summaryClose = document.getElementById('summaryClose');
 const summaryContinue = document.getElementById('summaryContinue');
 const summaryRestart = document.getElementById('summaryRestart');
+const pauseModal = document.getElementById('pauseModal');
+const pauseContinue = document.getElementById('pauseContinue');
+const pauseRestart = document.getElementById('pauseRestart');
+const pauseSettings = document.getElementById('pauseSettings');
+const pauseHome = document.getElementById('pauseHome');
+const pauseCorner = document.getElementById('pauseCorner');
+function showPauseButton(){
+  pauseCorner?.classList.remove('hidden');
+}
+
+function hidePauseButton(){
+  pauseCorner?.classList.add('hidden');
+}
+hidePauseButton();
   const stageModal = document.getElementById('stageModal');
   const stageDesc = document.getElementById('stageDesc');
   const stageNext = document.getElementById('stageNext');
@@ -1735,25 +1847,40 @@ const summaryRestart = document.getElementById('summaryRestart');
   const refillBag = () => {
     let pool;
 
-if(endlessMode){
-  pool = [
-    'I','O','I','O','I','O','I','O',
-    'I','O','I','O',
-    'G','E',
-    'M',
-    'B','B',
-    'C'
-  ];
-}else{
-  pool = ORDER.slice().concat(['C']); // extra C so you can actually see it
-}
-  // Fisher–Yates shuffle
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
-  }
-  bag = pool;
-};
+    if(endlessMode){
+      // 无尽：主要 I（长条）为主，O 次之；极低概率夹带 1 个特殊块（保持“偶尔有惊喜”）
+      pool = [
+        'I','I','I','I','I','I',
+        'O','O','O','O',
+        'E' // ≈ 1/11 机会
+      ];
+    }else{
+      // 普通/求饶/大神/菜鸡：常规 7 种形状占大头，特殊块很少出现
+      const BASE = ['I','O','T','S','Z','J','L'];
+
+      // 让“非正方形”更常见：I/T/S/Z/J/L 权重更高；O 只放 1 次
+      pool = [
+        // I/T/S/Z/J/L 各 3 次
+        'I','I','I',
+        'T','T','T',
+        'S','S','S',
+        'Z','Z','Z',
+        'J','J','J',
+        'L','L','L',
+        // O（正方形）只 1 次
+        'O',
+
+        // 特殊块：低权重（每袋各 1 次）
+        'G','E','M','B','C'
+      ];
+    }
+    // Fisher–Yates shuffle
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    bag = pool;
+  };
 
 let piece, nextKind;
 
@@ -1916,6 +2043,19 @@ function closeSummaryModal(){
   if(!summaryModal) return;
   summaryModal.classList.remove('show');
   summaryModal.setAttribute('aria-hidden','true');
+}
+function openPauseModal(){
+  if(!pauseModal) return;
+  paused = true;
+  overlayEl?.classList.add('show');
+  pauseModal.classList.add('show');
+  pauseModal.setAttribute('aria-hidden','false');
+}
+
+function closePauseModal(){
+  if(!pauseModal) return;
+  pauseModal.classList.remove('show');
+  pauseModal.setAttribute('aria-hidden','true');
 }
 function continueAfterGameOver(){
   summaryShown = false;
@@ -2353,7 +2493,7 @@ function closeClearHistoryModal(){
 }
 function renderSummary(){
   if(!summaryBody) return;
-  const dur = gameStartAt ? (Date.now() - gameStartAt) : 0;
+  const dur = gameStartAt ? (Date.now() - gameStartAt) : 0
 
   summaryBody.innerHTML = `
     <div class="summary">
@@ -2524,6 +2664,53 @@ modeResumeRestart?.addEventListener('click', () => {
   }
 
   applyModeWithRestart(k);
+});
+// ⏸ 棋盘右上角暂停按钮
+pauseCorner?.addEventListener('click', () => {
+  if(!started || gameOver) return; // 🔒 只允许游戏中暂停
+  if(paused) return;
+  openPauseModal();
+});
+
+// ▶ 继续游戏
+pauseContinue?.addEventListener('click', () => {
+  closePauseModal();
+  paused = false;
+  overlayEl?.classList.remove('show');
+});
+
+// ↻ 重新开始
+pauseRestart?.addEventListener('click', () => {
+  closePauseModal();
+  paused = false;
+  reset();
+  startGame();
+});
+
+// 🏠 回到主页面（开始界面）
+pauseHome?.addEventListener('click', () => {
+  closePauseModal();
+  paused = false;
+  gameOver = false;
+
+  // 清理棋盘和状态，但不强制选模式
+  board = Array.from({length:H}, () => Array(W).fill(null));
+  bag = [];
+  nextKind = null;
+  piece = null;
+
+  overlayEl?.classList.remove('show');
+  overlayEl.textContent = "";
+
+  // 显示开始界面
+  started = false;
+  startScreen?.classList.add('show');
+  hidePauseButton();
+});
+
+// 🎛 设置 / 控制（占位）
+pauseSettings?.addEventListener('click', () => {
+  // 暂时不写任何逻辑
 });
 
 modeResumeContinue?.addEventListener('click', () => {
@@ -3659,6 +3846,7 @@ const btnStart = document.getElementById('btnStart');
 function startGame(){
   started = true;
   startScreen?.classList.remove('show');
+  showPauseButton();
   gameStartAt = Date.now();
   reset();
 }
